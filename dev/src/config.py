@@ -105,4 +105,31 @@ def add_function(module, sub_module, *functions):
 
 
 def get_function(module, sub_module, *functions):
+
+    def fn(__sub_module, _functions):
+        for function in __sub_module['functions']:
+            if _functions[0] == function['name']:
+                return function if len(_functions) == 1 else fn(function, _functions[1:])
+        raise NameError(f'function not find: {_functions[0]}!')
+
     _sub_module = get_sub_module(module, sub_module)
+    assert len(functions) > 0
+    return fn(_sub_module, functions)
+
+
+def add_algorithm(module, sub_module, *functions, algorithm, config):
+    function = get_function(module, sub_module, *functions)
+    function['algorithms'].append(
+        dict(
+            name=algorithm,
+            config=config
+        )
+    )
+
+
+def get_algorithm(module, sub_module, *functions, algorithm):
+    function = get_function(module, sub_module, *functions)
+    for _algorithm in function['algorithms']:
+        if algorithm == _algorithm['name']:
+            return _algorithm
+    raise NameError(f'algorithm not find: {algorithm}!')
