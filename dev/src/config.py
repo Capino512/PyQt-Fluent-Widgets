@@ -3,50 +3,52 @@
 title = '冰冻圈关键要素模型模拟与反演平台'
 
 
-algos = [
-    dict(
-        id='id',
-        name='name',
-        description='description',
-        executable='executable',
-        outputs=[('name', 'postfix', 'flag')],
-    )
-]
+# algos = [
+#     dict(
+#         id='id',
+#         name='name',
+#         description='description',
+#         executable='executable',
+#         outputs=[('name', 'postfix', 'flag')],
+#     )
+# ]
+# 
+# 
+# # 1111 /模拟仿真子平台/积雪/模拟仿真/全球尺度
+# # 112
+# # 113
+# 
+# sub_funcs = [
+#     dict(
+#         name='全球尺度',
+#         algos=algos,
+#     )
+# ]
+# 
+# 
+# funcs = [
+#     dict(
+#         name='模拟仿真',
+#         funcs=sub_funcs,
+#     )
+# ]
+# 
+# sub_modules = [
+#     dict(
+#         name='积雪',
+#         funcs=funcs
+#     )
+# ]
+# 
+# 
+# modules = [
+#     dict(
+#         name='模拟仿真子平台',
+#         sub_modules=sub_modules
+#     )
+# ]
 
-
-# 1111 /模拟仿真子平台/积雪/模拟仿真/全球尺度
-# 112
-# 113
-
-sub_funcs = [
-    dict(
-        name='全球尺度',
-        algos=algos,
-    )
-]
-
-
-funcs = [
-    dict(
-        name='模拟仿真',
-        funcs=sub_funcs,
-    )
-]
-
-sub_modules = [
-    dict(
-        name='积雪',
-        funcs=funcs
-    )
-]
-
-
-modules = [
-    dict(
-        name='模拟仿真子平台',
-        sub_modules=sub_modules
-    )
-]
+modules = []
 
 def add_module(module):
     modules.append(
@@ -69,7 +71,7 @@ def add_sub_module(module, sub_module):
     _module['sub_modules'].append(
         dict(
             name=sub_module,
-            funcs=[]
+            functions=[]
         )
     )
 
@@ -133,3 +135,48 @@ def get_algorithm(module, sub_module, *functions, algorithm):
         if algorithm == _algorithm['name']:
             return _algorithm
     raise NameError(f'algorithm not find: {algorithm}!')
+
+
+def main():
+    from pprint import pp
+
+    add_module('模拟仿真子平台')
+
+    add_sub_module('模拟仿真子平台', '积雪')
+    add_function('模拟仿真子平台', '积雪', '模拟仿真')
+    add_function('模拟仿真子平台', '积雪', '模拟仿真', '全球尺度')
+    add_algorithm('模拟仿真子平台', '积雪', '模拟仿真', '全球尺度', algorithm='DTMA', config={})
+
+    add_function('模拟仿真子平台', '积雪', '模拟仿真', '区域尺度')
+    add_function('模拟仿真子平台', '积雪', '模拟仿真', '点尺度')
+    add_function('模拟仿真子平台', '积雪', '模拟仿真', '模拟数据库构建')
+
+    add_function('模拟仿真子平台', '积雪', '模拟验证')
+    add_function('模拟仿真子平台', '积雪', '模拟验证', '全球尺度')
+    add_function('模拟仿真子平台', '积雪', '模拟验证', '区域尺度')
+    add_function('模拟仿真子平台', '积雪', '模拟验证', '点尺度')
+    add_function('模拟仿真子平台', '积雪', '模拟验证', '模拟数据库构建')
+
+    add_function('模拟仿真子平台', '积雪', '敏感性分析')
+    add_function('模拟仿真子平台', '积雪', '敏感性分析', '全球尺度')
+    add_function('模拟仿真子平台', '积雪', '敏感性分析', '区域尺度')
+    add_function('模拟仿真子平台', '积雪', '敏感性分析', '点尺度')
+    add_function('模拟仿真子平台', '积雪', '敏感性分析', '模拟数据库构建')
+
+    add_function('模拟仿真子平台', '积雪', '载荷指标论证')
+    add_function('模拟仿真子平台', '积雪', '载荷指标论证', '全球尺度')
+    add_function('模拟仿真子平台', '积雪', '载荷指标论证', '区域尺度')
+    add_function('模拟仿真子平台', '积雪', '载荷指标论证', '点尺度')
+    add_function('模拟仿真子平台', '积雪', '载荷指标论证', '模拟数据库构建')
+
+
+    add_sub_module('模拟仿真子平台', '土壤')
+
+    add_module('数据处理子平台')
+
+    pp(modules)
+    pp(get_algorithm('模拟仿真子平台', '积雪', '模拟仿真', '全球尺度', algorithm='DTMA'))
+
+
+if __name__ == '__main__':
+    main()
