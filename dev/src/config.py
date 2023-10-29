@@ -1,5 +1,9 @@
 
 
+import os
+import pandas as pd
+
+
 title = '冰冻圈关键要素模型模拟与反演平台'
 
 
@@ -178,5 +182,54 @@ def main():
     pp(get_algorithm('模拟仿真子平台', '积雪', '模拟仿真', '全球尺度', algorithm='DTMA'))
 
 
+def walk(root):
+
+    def _add_algo(_root, lasts):
+        path = os.path.join(_root, 'config.xlsx')
+        ds = pd.read_excel(path, sheet_name=0, header=None)
+        print(ds)
+        algo_name, algo_desc, executable, num_outputs = ds.iloc[:, 1].values
+
+        ds = pd.read_excel(path, sheet_name=1)
+        print(ds)
+        output_params = ds.values
+        config = dict(name=algo_name, description=algo_desc, executable=executable, outputs=output_params)
+        add_algorithm(*lasts, algorithm=algo_name, config=config)
+
+
+
+    def fn(_root, lasts):
+        for __root, dirs, files in os.walk(_root):
+            if len(files) > 0:
+                _add_algo(__root, lasts)
+            elif len(dirs) > 0:
+                for name in dirs:
+                    function = name.split('_', 1)[1]
+                    add_function(*lasts, function)
+                    fn(os.path.join(_root, name), (*lasts, function))
+            else:
+                pass
+
+    for name_0 in sorted(os.listdir(root)):
+        module = name_0.split('_', 1)[1]
+        add_module(module)
+        for name_1 in os.path.join(root, name_0):
+           sub_module = name_1.split('_', 1)[1]
+           add_sub_module(module, sub_module)
+
+
 if __name__ == '__main__':
-    main()
+    pass
+    # main()
+    # ds = pd.read_excel(r"C:\Users\capino\Desktop\config.xlsx", sheet_name=0, header=None)
+    # print(ds.iloc[:, 1].values)
+    # for v in ds.iloc[:, 1].values:
+    #     print(v, type(v))
+    # print(ds)
+    #
+    # ds = pd.read_excel(r"C:\Users\capino\Desktop\config.xlsx", sheet_name=1)
+    # print(ds)
+    #
+    # print(ds.values)
+
+    # pip install pandas openpyxl
