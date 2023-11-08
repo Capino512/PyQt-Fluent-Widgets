@@ -99,7 +99,7 @@ def walk(root):
 
         algo_name, algo_desc, executable, num_outputs = ds.iloc[:, 1].values
         algo_name = os.path.basename(_root).split('_', 1)[1]
-        print('add algorithm:', '/'.join([*lasts, algo_name]))
+        print('add algorithm :', '/'.join([*lasts, algo_name]))
         # print(ds.to_string(header=False, index=False))
 
         ds = pd.read_excel(path, sheet_name=1)
@@ -109,7 +109,7 @@ def walk(root):
         add_algorithm(*lasts, config=config)
 
     def _add_function(*names):
-        print('add function :', '/'.join(names))
+        print('add function  :', '/'.join(names))
         add_function(*names)
 
     def _walk(_root, lasts):
@@ -140,9 +140,12 @@ def walk(root):
     # print(root)
     for name_0 in sorted(os.listdir(root)):
         module = name_0.split('_', 1)[1]
+        print('add module    :', module)
         add_module(module)
+
         for name_1 in os.listdir(os.path.join(root, name_0)):
             sub_module = name_1.split('_', 1)[1]
+            print('add sub_module:', f'{module}/{sub_module}')
             add_sub_module(module, sub_module)
             _walk(os.path.join(root, name_0, name_1), (module, sub_module))
 
