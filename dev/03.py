@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QHBoxLayout, QVBoxLayout, QS
 from qfluentwidgets import SplashScreen, PixmapLabel, ImageLabel, CardWidget, IconWidget, TextWrap, FluentIcon, \
     ToolButton, FlowLayout, CommandBar, CommandBarView, Action, ListWidget, TreeView, TabBar, TreeWidget, ProgressBar, \
     IndeterminateProgressBar, PushButton, LineEdit, TransparentDropDownPushButton, setFont, RoundMenu, BodyLabel, \
-    ComboBox
+    ComboBox, Dialog, MessageBox
 
 from qframelesswindow import FramelessWindow, StandardTitleBar
 from src.config import modules, get_function, walk
@@ -314,9 +314,9 @@ class SubModule(QWidget):
         self.commandBar.addSeparator()
         self.commandBar.addWidget(self.createDropDownButton2())
         self.commandBar.addSeparator()
-        self.commandBar.addAction(Action(FluentIcon.QUESTION, '帮助', triggered=self.onEdit))
+        self.commandBar.addAction(Action(FluentIcon.QUESTION, '帮助', triggered=lambda: os.startfile(r'.\resource\使用手册.pdf')))
         self.commandBar.addSeparator()
-        self.commandBar.addAction(Action(FluentIcon.PHONE, '联系我们', triggered=self.onEdit))
+        self.commandBar.addAction(Action(FluentIcon.PHONE, '联系我们', triggered=self.on_show_contact))
         v_layout = QVBoxLayout()
         self.setLayout(v_layout)
 
@@ -394,8 +394,16 @@ class SubModule(QWidget):
         button.setMenu(menu)
         return button
 
-    def onEdit(self, *args):
-        print(args)
+    def on_show_contact(self):
+        title = '联系方式'
+        content = \
+"""
+Email: liugj@mail.bnu.edu.cn
+"""
+        w = Dialog(title, content, self)
+        w.setTitleBarVisible(False)
+        w.cancelButton.hide()
+        w.exec()
 
     def on_show_select(self):
         pass
@@ -447,8 +455,11 @@ if __name__ == '__main__':
 
     W = 1100
     H = 700
+    # W = int(1920 * 0.6)
+    # H = int(1080 * 0.6)
+
     SAVE_DIR = r"D:\01\temp\bsd"
-    BG_IMG_PATH = './resource/bg.jpeg'
+    BG_IMG_PATH = './resource/bg.jpg'
     TITLE = '冰冻圈关键要素模型模拟与反演平台'
     CURRENT_DIR = '.'
 

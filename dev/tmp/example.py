@@ -11,12 +11,15 @@ print = partial(print, flush=True)
 
 def main():
     inputs, outputs = sys.argv[1:]
+
     print(f'[Info] 输入参数文件: {inputs}')
+    with open(inputs, 'rt', encoding='utf-8') as f:
+        print(f.read())
+
     print(f'[Info] 输出参数文件: {outputs}')
-    with open(inputs, 'rt', encoding='utf-8') as f:
+    with open(outputs, 'rt', encoding='utf-8') as f:
         print(f.read())
-    with open(inputs, 'rt', encoding='utf-8') as f:
-        print(f.read())
+
     for i in range(100):
         if i == 0:
             print('[Info] 开始...')
@@ -28,8 +31,9 @@ def main():
             print('[Error] 步骤3...')
         time.sleep(0.1)
         print(f'[Progress] {i + 1}')
+
     print('[Info] 成功')
-    # time.sleep(1)
+    time.sleep(1)
 
 
 if __name__ == '__main__':
