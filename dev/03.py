@@ -9,7 +9,7 @@ import PySide6
 import subprocess
 from PySide6.QtCore import Qt, QEventLoop, QTimer, QSize
 from PySide6 import QtCore, QtGui
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtGui import QIcon, QPixmap, QFontDatabase
 from PySide6.QtWidgets import QApplication, QLabel, QHBoxLayout, QVBoxLayout, QStackedLayout, QWidget, QTabWidget, \
     QTabBar, QTreeWidgetItem, QFrame, QDialog, QLineEdit, QPushButton, QFormLayout, QFileDialog
 
@@ -458,6 +458,7 @@ if __name__ == '__main__':
     # W = int(1920 * 0.6)
     # H = int(1080 * 0.6)
 
+
     SAVE_DIR = r"D:\01\temp\bsd"
     BG_IMG_PATH = './resource/bg.jpg'
     TITLE = '冰冻圈关键要素模型模拟与反演平台'
@@ -469,4 +470,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     main_win = Demo()
     main_win.show()
+    # print(QFontDatabase.families())
+
     app.exec()
