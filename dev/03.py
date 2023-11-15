@@ -20,6 +20,9 @@ from qfluentwidgets import SplashScreen, PixmapLabel, ImageLabel, CardWidget, Ic
 
 from qframelesswindow import FramelessWindow, StandardTitleBar
 from src.config import modules, get_function, walk
+from PIL import Image
+# import locale
+# locale.setlocale(locale.LC_CTYPE,"chinese")
 
 
 class Thread(QtCore.QThread):
@@ -40,14 +43,30 @@ class Thread(QtCore.QThread):
 
     def run(self):
         self.cancel = False
+        # print(self.cmd)
         process = subprocess.Popen(self.cmd, cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
         self.process = process
         while (code := process.poll()) is None:
-            line = process.stdout.readline().strip()
+
+            # try:
+            #     line = line.decode("utf-8").strip()
+            # except:
+            #     continue
+                # try:
+                #     line = (line.decode("gbk").strip())
+                #     print('gbk', line)
+                # except:
+                #     continue
+            # line = process.stdout.readline().strip()
+            try:
+                line = process.stdout.readline().strip()
+                # print(line)
+            except:
+                continue
             if line:
                 print(line)
                 if line.startswith('[Progress]'):
-                    self.on_progress.emit(int(line.removeprefix('[Progress]').strip()))
+                    self.on_progress.emit(float(line.removeprefix('[Progress]').strip()))
                 for s in ['[Info]', '[Warning]', '[Error]']:
                     if line.startswith(s):
                         self.on_message.emit(line.removeprefix(s).strip())
@@ -107,6 +126,7 @@ class FunctionDialog(QDialog):
         desc_label.setStyleSheet('border: 1px solid rgba(0, 0, 0, 15);')
         desc_label.setFixedWidth(160)
         desc_label.setAlignment(PySide6.QtCore.Qt.AlignmentFlag.AlignTop)
+        desc_label.setWordWrap(True)
         self.desc_label = desc_label
         self.on_select_algo()
 
@@ -152,6 +172,7 @@ class FunctionDialog(QDialog):
 
     def on_select_algo(self, index=None):
         self.input_param.clear()
+        self.input_param.setText('D:/03/python/04/PyQt-Fluent-Widgets/dev/module_2/01_模拟仿真子平台/01_敏感性分析/01_局部敏感性分析/01_角度/01_局部敏感性分析（入射角）/angle_input.txt')
         if index is not None:
             self.algo = self.algorithms[index]
 
@@ -164,19 +185,21 @@ class FunctionDialog(QDialog):
         for _name, postfix, flag in algo.outputs:
             with hbox_layout() as layout:
                 layout.addWidget(param := LineEdit())
+                param.setText('D:/03/python/04/PyQt-Fluent-Widgets/dev/module_2/01_模拟仿真子平台/01_敏感性分析/01_局部敏感性分析/01_角度/01_局部敏感性分析（入射角）/out.png')
                 layout.addWidget(btn:=PushButton(f'选择'))
                 btn.clicked.connect(lambda *, _param=param, _postfix=postfix: self.on_select_file(_param, f'*{_postfix}', True))
                 form.addRow(BodyLabel(f'{_name} (*{postfix})：'), layout)
-                self.output_params.append(param)
-        self.desc_label.setText(f'算法描述：\n{algo.description}')
+                self.output_params.append([_name, param])
+
+        self.desc_label.setText("<p style='line-height:24px;white-space:pre-wrap'>%s</p>" % f'<strong>算法描述</strong>\n{algo.description}')
 
     def check_params(self):
-        return all([param.text() for param in ([self.input_param] + self.output_params)])
+        return all([param.text() for param in ([self.input_param] + [x[1] for x in self.output_params])])
 
     def make_param_file(self):
-        path = datetime.now().strftime(f'%Y-%m-%d_%H-%M-%S_{self.algo.name}.txt')
-        with open(os.path.join(SAVE_DIR, path), 'wt') as f:
-            f.write('\n'.join([param.text() for param in self.output_params]))
+        path = os.path.join(SAVE_DIR, datetime.now().strftime(f'%Y-%m-%d_%H-%M-%S_{self.algo.name}.txt'))
+        with open(path, 'wt', encoding='utf-8') as f:
+            f.write('\n'.join([f'{name}：{param.text()}' for name, param in self.output_params]))
         return path
 
     def on_run(self):
@@ -185,6 +208,7 @@ class FunctionDialog(QDialog):
 
         self.progress_bar.setValue(0)
         self.progress_bar.show()
+        self.progress_label.setText('开始执行...')
         algo = self.algo
 
         cmd = f'"{algo.executable}" "{self.input_param.text()}" "{self.make_param_file()}"'
@@ -203,14 +227,20 @@ class FunctionDialog(QDialog):
 
     def on_finished(self, success):
         if success:
+            self.progress_bar.setValue(100)
+            self.progress_label.setText('执行成功')
             ret = []
-            for i, param in enumerate(self.output_params):
+            for i, (_, param) in enumerate(self.output_params):
                 ret.append([param.text(), *self.algo.outputs[i]])
 
-            with open(os.path.splitext(self.input_param.text())[0] + '.pro', 'wt', encoding='utf-8') as f:
-                json.dump(ret, f, ensure_ascii=False)
+            # with open(os.path.splitext(self.input_param.text())[0] + '.pro', 'wt', encoding='utf-8') as f:
+            #     json.dump(ret, f, ensure_ascii=False)
 
             self.on_show_result.emit(ret)
+        else:
+            self.progress_bar.setValue(0)
+            self.progress_label.setText('执行失败')
+        self.close()
 
 
 class Frame(QFrame):
@@ -322,25 +352,34 @@ class SubModule(QWidget):
 
         h_layout = QHBoxLayout()
         h_layout.addWidget(file_list := ListWidget())
-        file_list.setStyleSheet('border: 1px solid rgba(0, 0, 0, 15);font:24pt')
-        file_list.setMaximumWidth(200)
-        file_list.itemActivated.connect(self.on_show_select)
+        # file_list.setStyleSheet('border: 1px solid rgba(0, 0, 0, 15);font:24pt')
+        file_list.setStyleSheet('border: 1px solid rgba(0, 0, 0, 15)')
+        file_list.setMinimumWidth(240)
+        file_list.setMaximumWidth(270)
+        # file_list.addItem('xxx')
+        # file_list.addItem('yyy')
+        # file_list.setFixedWidth(240)
+        # file_list.itemActivated.connect(self.on_show_select)
+        file_list.itemSelectionChanged.connect(self.on_show_select)
         self.file_list = file_list
         h_layout.addWidget(display_area := QLabel())
         display_area.setStyleSheet('border: 1px solid rgba(0, 0, 0, 15);background-color:#eeeeee')
         h_layout.addWidget(tool_box:=QTabWidget())
+        setFont(tool_box, 14)
         tool_box.setTabShape(PySide6.QtWidgets.QTabWidget.TabShape.Triangular)
         self.display_area = display_area
-        self.display_area.setAlignment(PySide6.QtCore.Qt.AlignmentFlag.AlignCenter)
 
         for sub_module in config:
             tree = TreeFrame(sub_module['functions'])
             tree.on_run.connect(self.on_run_function)
             tool_box.addTab(tree, sub_module['name'])
+        tool_box.setMinimumWidth(240)
         tool_box.setMaximumWidth(270)
         tool_box.setTabsClosable(False)
         v_layout.addWidget(self.commandBar)
         v_layout.addLayout(h_layout)
+
+        self.files = []
 
     def on_run_function(self, data):
         # print(data)
@@ -350,13 +389,39 @@ class SubModule(QWidget):
 
     def show_result(self, data):
         count = 0
-        print(data)
+        # print(data)
+
         for path, name, postfix, flag in data:
             if flag:
+                self.files.append(path)
                 self.file_list.addItem(os.path.basename(path))
                 if count == 0:
                     self.file_list.setCurrentRow(self.file_list.count() - 1)
+                    self.display(path)
                 count += 1
+
+
+    def display(self, path: str):
+        if path.endswith('.txt'):
+            self.display_area.setAlignment(PySide6.QtCore.Qt.AlignmentFlag.AlignTop | PySide6.QtCore.Qt.AlignmentFlag.AlignLeft)
+            self.display_area.setText(open(path).read())
+        else:
+            max_w, max_h = 800, 600
+            img = Image.open(path)
+            w = img.width
+            h = img.height
+            if w > max_w or h > max_h:
+                if w / max_w > h / max_h:
+                    k = w / max_w
+                    w = max_w
+                    h = int(h / k)
+                else:
+                    k = h / max_h
+                    h = max_h
+                    w = int(w / k)
+                img = img.resize([w, h], resample=Image.Resampling.BICUBIC)
+            self.display_area.setAlignment(PySide6.QtCore.Qt.AlignmentFlag.AlignCenter)
+            self.display_area.setPixmap(img.toqpixmap())
 
     def createDropDownButton(self):
         button = TransparentDropDownPushButton('文件', self, FluentIcon.FOLDER)
@@ -380,10 +445,14 @@ class SubModule(QWidget):
         menu = RoundMenu(parent=self)
 
         data = [
-            ['积雪-全球模拟', ['模拟仿真子平台', '积雪', '模拟仿真', '全球尺度']],
-            ['积雪-全球模拟', ['模拟仿真子平台', '积雪', '模拟仿真', '全球尺度']],
-            ['积雪-全球模拟', ['模拟仿真子平台', '积雪', '模拟仿真', '全球尺度']],
-            ['积雪-全球模拟', ['模拟仿真子平台', '积雪', '模拟仿真', '全球尺度']],
+            ['局部敏感性分析-角度', ['模拟仿真子平台', '敏感性分析', '局部敏感性分析', '角度']],
+            # ['全局敏感性分析', ['模拟仿真子平台', '敏感性分析', '全局敏感性分析']],
+            ['模拟验证-地面验证', ['模拟仿真子平台', '模拟验证', '地面尺度验证']],
+            # ['模拟验证-全球尺度验证', ['模拟仿真子平台', '模拟验证', '全球尺度验证']],
+            ['模型模拟-点尺度', ['模拟仿真子平台', '模型模拟', '点尺度']],
+            # ['模型模拟-全球模拟', ['模拟仿真子平台', '模型模拟', '全球模拟']],
+            ['载荷指标论证-灵敏度指标', ['模拟仿真子平台', '载荷指标论证', '灵敏度指标']],
+            # ['载荷指标论证-全球模拟', ['模拟仿真子平台', '载荷指标论证', '稳定度与定标精度指标']],
         ]
         actions = []
         for name, values in data:
@@ -405,8 +474,9 @@ Email: liugj@mail.bnu.edu.cn
         w.cancelButton.hide()
         w.exec()
 
-    def on_show_select(self):
-        pass
+    def on_show_select(self, *args):
+        path = self.files[self.file_list.currentRow()]
+        self.display(path)
 
 
 class Demo(FramelessWindow):
@@ -427,6 +497,7 @@ class Demo(FramelessWindow):
 
         layout_btn = QVBoxLayout()
         layout_btn.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_btn.addSpacing(240)
 
         widget_bg = QWidget()
         bg = PixmapLabel(widget_bg)
@@ -460,12 +531,13 @@ if __name__ == '__main__':
 
 
     SAVE_DIR = r"D:\01\temp\bsd"
+    # SAVE_DIR = r"./"
     BG_IMG_PATH = './resource/bg.jpg'
     TITLE = '冰冻圈关键要素模型模拟与反演平台'
     CURRENT_DIR = '.'
 
     os.makedirs(SAVE_DIR, exist_ok=True)
-    walk('./module')
+    walk('./module_2')
 
     app = QApplication(sys.argv)
     main_win = Demo()

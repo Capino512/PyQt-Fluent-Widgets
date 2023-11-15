@@ -1,0 +1,10 @@
+雪深：ERA5-Land_SD.nc
+雪密度：ERA5-Land_Density.nc
+雪温：ERA5-Land_Tsnow.nc
+雪粒径：0.06
+粘性系数：0.1
+地面温度：ERA5-Land_Tg.nc
+土壤水份：ERA5-Land_smc.nc
+土壤质地：GSDE.nc
+植被覆盖度：vege_coverage.nc
+生物量：biomass.nc

@@ -1,0 +1,1 @@
+[["D:/03/python/04/PyQt-Fluent-Widgets/dev/module_2/01_模拟仿真子平台/04_载荷指标论证/01_灵敏度指标/01_灵敏度指标分析/test.png", "输出参数1", ".png", 1]]

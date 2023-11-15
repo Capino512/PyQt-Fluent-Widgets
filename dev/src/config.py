@@ -132,7 +132,8 @@ def walk(root):
                     # _walk(os.path.join(_root, name), (*lasts, function))
 
             else:
-                _add_function(*lasts)
+                pass
+                # _add_function(*lasts)
             break
 
 

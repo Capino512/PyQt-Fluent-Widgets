@@ -1,0 +1,8 @@
+X轴：SnowDepth
+X轴范围：1,1,200
+Y轴：BrightnessTemperature
+Y轴范围：默认
+第三变量：GrainSize
+第三变量范围：0.05,0.05,0.3
+其他固定参数：fGHz,Tsnow,tau,Tg,mv,clayfrac,rho,H_or_V,IncidentAngle
+其他固定参数值：36.5,268,0.1,265,0.1,0.3,0.25,2,55

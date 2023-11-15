@@ -1,0 +1,6 @@
+频率：6.925,10.65,18.7,36.5
+极化：H,V
+敏感性的参数：SnowDepth,GrainSize,SnowDensity,IncidentAngle,GroundTemperature,SnowTemperature
+参数最小值：1,0.01,0.05,5,243,243
+参数最大值：200,0.2,0.4,60,273,273
+Sobol模拟值的数量：20

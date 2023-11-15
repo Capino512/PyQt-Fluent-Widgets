@@ -1,0 +1,7 @@
+SnowParaTxtPath：snowpack.txt
+频率（GHz）：18.7
+地面温度（K）：270
+土壤水份（cm^3/cm^3）：0.02
+黏土含量：0.3
+入射角（°）：55
+结果保存位置：TB.txt

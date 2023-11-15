@@ -1,0 +1,1 @@
+输出差值结果：AMSR2_Sim_Diff.PNG
