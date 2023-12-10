@@ -1,6 +1,6 @@
 
 
-from typed_var import *
+from typed import *
 
 
 def parse_module_config():
@@ -15,7 +15,7 @@ def parse_module_config():
 def parse_input_config(init_config, config_path, mode):
     config = init_config()
     if mode == 'w':
-        config.to_ini(config_path)
+        config.dump_ini(config_path)
     else:
-        config.from_ini(config_path)
+        config.load_ini(config_path)
     return config

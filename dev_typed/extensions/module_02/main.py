@@ -14,7 +14,7 @@ def main(config_path='config.ini'):
     #     from .config import init_config
 
     config = init_config()
-    config.from_ini(config_path)
+    config.load_ini(config_path)
     pp(config.data)
 
 

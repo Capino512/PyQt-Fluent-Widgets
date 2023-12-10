@@ -6,7 +6,7 @@ from PySide6.QtCore import QThread, Signal
 
 
 class Thread(QThread):
-    on_finished = Signal(bool)
+    on_finished = Signal(int)
     on_progress = Signal(int)
     on_message = Signal(str)
 
@@ -25,19 +25,22 @@ class Thread(QThread):
         self.cancel = False
         process = subprocess.Popen(self.cmd, cwd=self.cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
         self.process = process
+        last_line = None
         while (code := process.poll()) is None:
             try:
-                line = process.stdout.readline().strip()
+                line = process.stdout.readline().strip('\n')
             except:
                 continue
-            if line:
-                self.on_message.emit(line)
-                print(line)
-                if line.startswith('[Progress]'):
-                    self.on_progress.emit(float(line.removeprefix('[Progress]').strip()))
-                for s in ['[Info]', '[Warning]', '[Error]']:
-                    if line.startswith(s):
-                        self.on_message.emit(line.removeprefix(s).strip())
-        success = code == 0 and not self.cancel
-        print(success)
-        self.on_finished.emit(success)
+            line_ = line.strip()
+            if line_ == '' and last_line == '':
+                continue
+            last_line = line_
+            self.on_message.emit(line)
+            # if line.startswith('[Progress]'):
+            #     self.on_progress.emit(float(line.removeprefix('[Progress]').strip()))
+            # for s in ['[Info]', '[Warning]', '[Error]']:
+            #     if line.startswith(s):
+            #         self.on_message.emit(line.removeprefix(s).strip())
+        # success = code == 0 and not self.cancel
+        # print(success)
+        self.on_finished.emit(code)

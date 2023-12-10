@@ -1,6 +1,6 @@
 
 
-from typed_var import *
+from typed import *
 
 
 def init_config():

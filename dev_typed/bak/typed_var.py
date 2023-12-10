@@ -5,7 +5,7 @@ import configparser
 from collections import OrderedDict
 
 
-__all__ = ['Int', 'Float', 'Bool', 'String', 'Var', 'ArrayVar', 'ListVar', 'ComboVar', 'Config', '_Unset']
+__all__ = ['Int', 'Float', 'Bool', 'String', 'Var', 'ArrayVar', 'ListVar', 'ComboVar', 'FileVar', 'OpenTextFileVar', 'SaveTextFileVar', 'DirVar', 'Config']
 
 
 class _Type:
@@ -91,6 +91,50 @@ class Var(_Var):
 
     def _from_string(self, value):
         return self.type(value)
+
+
+class FileVar(Var):
+    def __init__(self, default=_Unset, filters='', desc=None):
+        super(FileVar, self).__init__(String, default, desc)
+        self.filters = filters
+
+
+class DirVar(Var):
+    def __init__(self, default=_Unset, desc=None):
+        super(DirVar, self).__init__(String, default, desc)
+
+
+class OpenFileVar(FileVar):
+    pass
+
+
+class OpenTextFileVar(OpenFileVar):
+    pass
+
+
+class SaveFileVar(FileVar):
+    pass
+
+
+class SaveTextFileVar(SaveFileVar):
+    pass
+
+
+class RangeVar(Var):
+    def __init__(self, type_, lower, upper, default=_Unset, desc=None):
+        super(RangeVar, self).__init__(type_, default, desc)
+        self.lower = lower
+        self.upper = upper
+
+
+class IntRangeVar(RangeVar):
+    def __init__(self, lower, upper, default=_Unset, desc=None):
+        super(IntRangeVar, self).__init__(Int, lower, upper, default, desc)
+
+
+class FloatRangeVar(RangeVar):
+    def __init__(self, lower, upper, default=_Unset, desc=None):
+        super(FloatRangeVar, self).__init__(Float, lower, upper, default, desc)
 
 
 class ArrayVar(_Var):

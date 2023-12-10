@@ -1,6 +1,6 @@
 
 
-from typed_var import *
+from typed import *
 
 
 def init_config():
@@ -20,4 +20,7 @@ def init_config():
     config.add_option('yyy', 'bbb', Var(Float, desc='desc'))
     config.add_option('yyy', 'ccc', Var(Bool, desc='desc'))
     config.add_option('yyy', 'ddd', Var(String, desc='desc'))
+    config.add_option('yyy', 'eee', OpenTextFileVar(desc='desc', filters="Images (*.png *.jpg *.bmp)"))
+    config.add_option('yyy', 'fff', SaveTextFileVar(desc='desc'))
+    config.add_option('yyy', 'ggg', DirVar(desc='desc'))
     return config

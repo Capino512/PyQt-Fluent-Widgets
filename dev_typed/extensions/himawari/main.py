@@ -23,12 +23,12 @@ def read_file(path):
 
 def main(config_file='config.ini'):
     config = init_config()
-    config.from_ini(config_file)
-    input_file = config.get('file', 'input')
-    output_file = config.get('file', 'output')
-    mistiming = config.get('setting', 'mistiming')
-    timezone = config.get('setting', 'timezone')
-    num_length = config.get('setting', 'num_length')
+    config.load_ini(config_file)
+    input_file = config.get_option('file', 'input')
+    output_file = config.get_option('file', 'output')
+    mistiming = config.get_option('setting', 'mistiming')
+    timezone = config.get_option('setting', 'timezone')
+    num_length = config.get_option('setting', 'num_length')
     if output_file == '':
         output_file = pdl.now().strftime('%Y-%d-%m_%H-%M-%S.txt')
     timezone = pdl.local_timezone() if timezone == 'local' else pdl.UTC
