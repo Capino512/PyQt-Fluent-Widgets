@@ -55,3 +55,5 @@ def main(config_file='config.ini'):
 if __name__ == '__main__':
 
     main(*sys.argv[1:])
+    # pyinstaller -F -c -p . main.py
+    # pyinstaller -F -c --paths . main.py
