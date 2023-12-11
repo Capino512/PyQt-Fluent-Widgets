@@ -23,4 +23,5 @@ def init_config():
     config.add_option('yyy', 'eee', OpenTextFileVar(desc='desc', filters="Images (*.png *.jpg *.bmp)"))
     config.add_option('yyy', 'fff', SaveTextFileVar(desc='desc'))
     config.add_option('yyy', 'ggg', DirVar(desc='desc'))
+    config.add_option('yyy', 'hhh', FloatRangeVar(-1, 10, desc='desc'))
     return config

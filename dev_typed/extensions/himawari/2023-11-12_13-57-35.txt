@@ -1,0 +1,8 @@
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202311/05/NC_H09_20231105_0350_R21_FLDK.06001_06001.nc
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202310/30/NC_H09_20231030_0420_R21_FLDK.06001_06001.nc
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202310/26/NC_H09_20231026_0420_R21_FLDK.06001_06001.nc
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202310/12/NC_H09_20231012_1500_R21_FLDK.06001_06001.nc
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202310/22/NC_H09_20231022_1330_R21_FLDK.06001_06001.nc
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202310/22/NC_H09_20231022_0400_R21_FLDK.06001_06001.nc
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202309/27/NC_H09_20230927_0500_R21_FLDK.06001_06001.nc
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202310/09/NC_H09_20231009_0400_R21_FLDK.06001_06001.nc

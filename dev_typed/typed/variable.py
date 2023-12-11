@@ -47,7 +47,8 @@ class _Var:
     def __call__(self, value):
         return self.from_string(value)
 
-
+# validate  # todo
+# correct
 class Var(_Var):
     def __init__(self, type_, default=Unset, desc=None):
         super(Var, self).__init__(default, desc)
@@ -149,17 +150,20 @@ class SaveTextFileVar(SaveFileVar):
 
 
 class RangeVar(Var):
-    def __init__(self, type_, lower, upper, default=Unset, desc=None):
+    def __init__(self, type_, lower, upper, default=Unset, desc=None, value_display_width=60):
         super(RangeVar, self).__init__(type_, default, desc)
         self.lower = lower
         self.upper = upper
+        self.value_display_width = value_display_width
 
 
 class IntRangeVar(RangeVar):
-    def __init__(self, lower, upper, default=Unset, desc=None):
-        super(IntRangeVar, self).__init__(Int, lower, upper, default, desc)
+    def __init__(self, lower, upper, default=Unset, desc=None, value_display_width=60):
+        super(IntRangeVar, self).__init__(Int, lower, upper, default, desc, value_display_width)
 
 
 class FloatRangeVar(RangeVar):
-    def __init__(self, lower, upper, default=Unset, desc=None):
-        super(FloatRangeVar, self).__init__(Float, lower, upper, default, desc)
+    def __init__(self, lower, upper, default=Unset, desc=None, value_display_width=60, steps=100, precision=2):
+        super(FloatRangeVar, self).__init__(Float, lower, upper, default, desc, value_display_width)
+        self.steps = steps
+        self.precision = precision

@@ -6,21 +6,103 @@ import importlib
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QApplication, QWidget, QFormLayout, QGroupBox, QVBoxLayout, QTabWidget, QHBoxLayout, \
-    QListWidgetItem, QFileDialog
-from qfluentwidgets import LineEdit, BodyLabel, ComboBox, CheckBox, PrimaryPushButton, ListWidget, ScrollArea, \
-    TextEdit, PushButton, IndeterminateProgressBar, Slider, setFont
+from PySide6.QtWidgets import QApplication, QWidget, QFormLayout, QGroupBox, QVBoxLayout, QHBoxLayout, \
+    QListWidgetItem, QFileDialog, QStackedWidget
+from qfluentwidgets import LineEdit, BodyLabel, ComboBox, CheckBox, PrimaryPushButton, ListWidget, \
+    SmoothScrollArea, TextEdit, PushButton, IndeterminateProgressBar, Slider, setFont, TabBar, \
+    TabCloseButtonDisplayMode
 from qframelesswindow import FramelessMainWindow
 from typed import *
-from utils.module import parse_module_config, parse_input_config
+from utils.module import init_module_config, parse_input_config
 from utils.thread import Thread
 
 
 CURRENT_DIR = '.'
 
 
-def get_file_path(parent, is_file, is_open, filters=''):
+class TabWidget(QWidget):
+    def __init__(self, parent=None):
+        super(TabWidget, self).__init__(parent)
+        tab_bar = TabBar()
+        tab_bar.setTabsClosable(True)
+        tab_bar.setCloseButtonDisplayMode(TabCloseButtonDisplayMode.ON_HOVER)
+        tab_bar.setAddButtonVisible(False)
+        tab_bar.tabCloseRequested.connect(self.close_tab)
+        stack = QStackedWidget()
+        vbox = QVBoxLayout()
+        vbox.addWidget(tab_bar)
+        vbox.addWidget(stack)
+        self.setLayout(vbox)
+        self.tab_bar = tab_bar
+        self.stack = stack
+        self._count = 0
+
+    def close_tab(self, index):
+        self.tab_bar.removeTab(index)
+        self.stack.removeWidget(self.stack.widget(index))
+        self.stack.setCurrentIndex(self.tab_bar.currentIndex())
+
+    def add_tab(self, name, widget, icon=None):
+
+        def on_click():
+            self.stack.setCurrentIndex(self.tab_bar.currentIndex())
+
+        self._count += 1
+        self.stack.addWidget(widget)
+        self.tab_bar.addTab(str(self._count), name, icon, onClick=on_click)
+        self.tab_bar.setCurrentIndex(self.stack.count() - 1)
+        self.stack.setCurrentIndex(self.stack.count() - 1)
+
+
+def default_input_widget(value):
+    w = LineEdit()
+    w.setClearButtonEnabled(True)
+    if value.has_value():
+        w.setText(value.to_string())
+    w.setToolTip(value.get_desc())
+
+    def get_value():
+        return value(w.text())
+
+    return w, get_value
+
+
+def combo_input_widget(value):
+    w = ComboBox()
+    w.addItems(value.values_as_string)
+    if value.has_value():
+        w.setText(value.to_string())
+    w.setToolTip(value.get_desc())
+
+    def get_value():
+        return value.values[w.currentIndex()]
+
+    return w, get_value
+
+
+def bool_input_widget(value):
+    w = CheckBox()
+    if value.has_value():
+        w.setChecked(value.get_value())
+    else:
+        w.setCheckState(Qt.CheckState.PartiallyChecked)
+    w.setToolTip(value.get_desc())
+
+    def get_value():
+        state = w.checkState()
+        assert state is not Qt.CheckState.PartiallyChecked
+        value.set_value(state is Qt.CheckState.Checked)
+
+    return w, get_value
+
+
+def file_input_widget(value, parent=None):
     # "Images (*.png *.jpg *.bmp)"
+
+    is_file = isinstance(value, FileVar)
+    is_open = isinstance(value, OpenFileVar)
+    filters = value.filters if is_file else ''
+
     def dialog():
         global CURRENT_DIR
         if is_file:
@@ -35,10 +117,59 @@ def get_file_path(parent, is_file, is_open, filters=''):
     layout = QHBoxLayout()
     line = LineEdit()
     btn = PushButton('...')
+
+    if value.has_value():
+        line.setText(value.to_string())
+    line.setToolTip(value.get_desc())
+
     layout.addWidget(line)
     layout.addWidget(btn)
     btn.clicked.connect(dialog)
-    return layout, line
+
+    def get_value():
+        return line.text()
+
+    return layout, get_value
+
+
+def range_input_widget(value):
+    lower = value.lower
+    upper = value.upper
+    is_float = isinstance(value, FloatRangeVar)
+    steps = value.steps if is_float else (upper - lower)
+    minimum, maximum = (0, steps) if is_float else (lower, upper)
+    fmt = f'%.{value.precision}f' if is_float else '%d'
+
+    def raw2slider(x):
+        return round((x - lower) / (upper - lower) * steps) if is_float else x
+
+    def slider2raw(x):
+        return (x / steps * (upper - lower) + lower) if is_float else x
+
+    def set_text(x):
+        label.setText(fmt % slider2raw(x))
+
+    layout = QHBoxLayout()
+    slider = Slider()
+    label = BodyLabel()
+    label.setFixedWidth(value.value_display_width)
+
+    slider.setRange(minimum, maximum)
+    if value.has_value():
+        slider.setValue(raw2slider(value.get_value()))
+    set_text(slider.value())
+
+    slider.setOrientation(Qt.Orientation.Horizontal)
+    slider.setToolTip(value.get_desc())
+    slider.valueChanged.connect(set_text)
+
+    layout.addWidget(slider)
+    layout.addWidget(label)
+
+    def get_value():
+        return slider2raw(slider.value())
+
+    return layout, get_value
 
 
 # module/config.py
@@ -57,11 +188,15 @@ class Module(QWidget):
         self.execute = execute
 
         layout = QVBoxLayout()
-        scroll = ScrollArea()
-        scroll.setStyleSheet('''ScrollArea{background-color: transparent}''')
+        scroll = SmoothScrollArea()
+        # scroll.setViewportMargins(0, 0, 0, 0)
+        scroll.setWidgetResizable(True)
+        # scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # scroll.setStyleSheet('''ScrollArea{background-color: transparent}''')
         widget = QWidget()
         widget.setMinimumWidth(500)
-        widget.setStyleSheet('''QWidget{background-color: rgba(0, 0, 0, 5)}''')
+        widget.setMaximumWidth(800)
+        # widget.setStyleSheet('''QWidget{background-color: rgba(0, 0, 0, 5)}''')
         vbox = QVBoxLayout()
 
         btn_start = PrimaryPushButton('start')
@@ -120,45 +255,17 @@ class Module(QWidget):
                 label = BodyLabel(option)
                 label.setFixedWidth(100)
                 if isinstance(value, ComboVar):
-                    w = ComboBox()
-                    w.addItems(value.values_as_string)
-                    if value.has_value():
-                        w.setText(value.to_string())
-                    layout.addRow(label, w)
+                    w, get_value = combo_input_widget(value)
                 elif isinstance(value, Var) and getattr(value, 'type', None) is Bool:
-                    w = CheckBox()
-                    if value.has_value():
-                        w.setChecked(value.get_value())
-                    else:
-                        w.setCheckState(Qt.CheckState.PartiallyChecked)
-                    layout.addRow(label, w)
+                    w, get_value = bool_input_widget(value)
                 elif isinstance(value, (FileVar, DirVar)):
-                    _layout, w = get_file_path(self, isinstance(value, FileVar), isinstance(value, OpenFileVar), getattr(value, 'filters', ''))
-                    if value.has_value():
-                        w.setText(value.to_string())
-                    layout.addRow(label, _layout)
+                    w, get_value = file_input_widget(value)
                 elif isinstance(value, RangeVar):
-                    w = Slider()
-                    # w.set
-                    w.setRange(value.lower, value.upper)
-                    # todo int
-                    # w.setPageStep()
-                    # w.setSingleStep()
-                    if value.has_value():
-                        w.setValue(value.get_value())
-
-                    # _layout, w = get_file_path(self, isinstance(value, FileVar), isinstance(value, OpenFileVar), getattr(value, 'filters', ''))
-                    # if value.has_value():
-                    #     w.setText(value.to_string())
-                    # layout.addRow(label, _layout)
+                    w, get_value = range_input_widget(value)
                 else:
-                    w = LineEdit()
-                    w.setClearButtonEnabled(True)
-                    if value.has_value():
-                        w.setText(value.to_string())
-                    layout.addRow(label, w)
-                w.setToolTip(value.get_desc())
-                self.values.append([value, w])
+                    w, get_value = default_input_widget(value)
+                layout.addRow(label, w)
+                self.values.append([value, get_value])
             box.setLayout(layout)
             vbox.addWidget(box)
         vbox.addStretch()
@@ -182,20 +289,13 @@ class Module(QWidget):
         self.text_area.append(line)
 
     def reset(self):
-        for value, w in self.values:
+        for value, _ in self.values:
             value.reset()
         self.init()
 
     def parse(self):
-        for value, w in self.values:
-            if isinstance(value, ComboVar):
-                value.set_value(value.values[w.currentIndex()])
-            elif isinstance(value, Var) and getattr(value, 'type', None) is Bool:
-                state = w.checkState()
-                assert state is not Qt.CheckState.PartiallyChecked
-                value.set_value(state is Qt.CheckState.Checked)
-            else:
-                value.set_value(value(w.text()))
+        for value, get_value in self.values:
+            value.set_value(get_value())
         self.config.dump_ini(self.config_path)
 
     def run_in_background(self):
@@ -225,15 +325,10 @@ class Demo(FramelessMainWindow):
         module_list = ListWidget()
         module_list.setMinimumWidth(120)
         module_list.setMaximumWidth(160)
-        module_list.setStyleSheet('border: 1px solid rgba(0, 0, 0, 15)')
+        # module_list.setStyleSheet('border: 1px solid rgba(0, 0, 0, 15)')
         module_list.itemDoubleClicked.connect(self.add_tab)
 
-        tab_widget = QTabWidget()
-        # tab_widget.setTabShape(QTabWidget.TabShape.Triangular)
-        tab_widget.setTabsClosable(True)
-        tab_widget.tabCloseRequested.connect(lambda index: tab_widget.removeTab(index))
-        setFont(tab_widget)
-
+        tab_widget = TabWidget()
         h_layout.addWidget(module_list)
         h_layout.addWidget(tab_widget)
         widget.setLayout(h_layout)
@@ -247,22 +342,24 @@ class Demo(FramelessMainWindow):
             module_ini = os.path.join('./extensions', module, 'module.ini')
             if not os.path.exists(module_ini):
                 continue
-            item = QListWidgetItem(module)
-            setFont(item)
+            module_config = init_module_config()
+            module_config.load_ini(module_ini)
+            module_name = module_config.get_option('module', 'name')
+            item = QListWidgetItem(module_name)
+            item.setData(Qt.ItemDataRole.UserRole, module)
             module_list.addItem(item)
 
-    def add_tab(self, index):
-        module = index.text()
+    def add_tab(self, item):
+        module = item.data(Qt.ItemDataRole.UserRole)
         module_ini = os.path.join('./extensions', module, 'module.ini')
-        module_config = parse_module_config()
+        module_config = init_module_config()
         module_config.load_ini(module_ini)
         module_dir = os.path.join('./extensions', module)
         execute = module_config.get_option('module', 'execute')
         config_path = os.path.join(module_dir, module_config.get_option('module', 'config'))
         mode = 'r' if os.path.exists(config_path) else 'w'
         input_config = parse_input_config(importlib.import_module(f'extensions.{module}').init_config, config_path, mode)
-        index = self.tab_widget.addTab(Module(module_dir, execute, config_path, input_config), module_config.get_option('module', 'name'))
-        self.tab_widget.setCurrentIndex(index)
+        self.tab_widget.add_tab(module_config.get_option('module', 'name'), Module(module_dir, execute, config_path, input_config))
 
     def center(self):
         qr = self.frameGeometry()
@@ -273,7 +370,7 @@ class Demo(FramelessMainWindow):
 
 if __name__ == '__main__':
 
-    W = 720
+    W = 960
     H = 640
 
     app = QApplication(sys.argv)

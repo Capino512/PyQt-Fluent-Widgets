@@ -30,11 +30,15 @@ class Config(OrderedDict):
         with open(path, 'wt', encoding='utf-8') as f:
             parser.write(f)
 
-    def load_ini(self, path):
+    def load_ini(self, path, skip_error=False):
         parser = configparser.ConfigParser()
         parser.optionxform = str  # upper case
         parser.read(path, encoding='utf-8')
         for section, values in self.items():
             for option, value in values.items():
-                _value = value(parser.get(section, option))
-                value.set_value(_value)
+                try:
+                    _value = value(parser.get(section, option))
+                    value.set_value(_value)
+                except Exception as e:
+                    if not skip_error:
+                        raise e
