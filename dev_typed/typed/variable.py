@@ -3,13 +3,13 @@
 from .base import *
 
 
-__all__ = ['Var', 'ArrayVar', 'ListVar', 'ComboVar',
+__all__ = ['Var', 'BoolVar', 'IntVar', 'FloatVar', 'StringVar', 'PasswordVar', 'ArrayVar', 'ListVar', 'ComboVar',
            'FileVar', 'OpenFileVar', 'OpenTextFileVar', 'SaveFileVar', 'SaveTextFileVar', 'DirVar',
            'RangeVar', 'IntRangeVar', 'FloatRangeVar']
 
 
 class _Var:
-    def __init__(self, default=Unset, desc=None):
+    def __init__(self, default=Unset, *, desc=None):
         self._default = default
         self._desc = '' if (desc is None) else f' # {desc}'
         self._value = Unset
@@ -50,8 +50,8 @@ class _Var:
 # validate  # todo
 # correct
 class Var(_Var):
-    def __init__(self, type_, default=Unset, desc=None):
-        super(Var, self).__init__(default, desc)
+    def __init__(self, type_, default=Unset, *, desc=None):
+        super(Var, self).__init__(default, desc=desc)
         self.type = type_
 
     def _get_desc(self):
@@ -65,9 +65,34 @@ class Var(_Var):
         return self.type(value)
 
 
+class BoolVar(Var):
+    def __init__(self, default=Unset, *, desc=None):
+        super(BoolVar, self).__init__(Bool, default, desc=desc)
+
+
+class IntVar(Var):
+    def __init__(self, default=Unset, *, desc=None):
+        super(IntVar, self).__init__(Int, default, desc=desc)
+
+
+class FloatVar(Var):
+    def __init__(self, default=Unset, *, desc=None):
+        super(FloatVar, self).__init__(Float, default, desc=desc)
+
+
+class StringVar(Var):
+    def __init__(self, default=Unset, *, desc=None):
+        super(StringVar, self).__init__(String, default, desc=desc)
+
+
+class PasswordVar(Var):
+    def __init__(self, default=Unset, *, desc=None):
+        super(PasswordVar, self).__init__(String, default, desc=desc)
+
+
 class ArrayVar(_Var):
-    def __init__(self, type_, length=None, default=Unset, desc=None):
-        super(ArrayVar, self).__init__(default, desc)
+    def __init__(self, type_, length=None, default=Unset, *, desc=None):
+        super(ArrayVar, self).__init__(default, desc=desc)
         self.type = type_
         self.length = length
         assert length is None or default is Unset or len(default) == length
@@ -85,8 +110,8 @@ class ArrayVar(_Var):
 
 
 class ListVar(_Var):
-    def __init__(self, type_list, default=Unset, desc=None):
-        super(ListVar, self).__init__(default, desc)
+    def __init__(self, type_list, default=Unset, *, desc=None):
+        super(ListVar, self).__init__(default, desc=desc)
         self.type_list = type_list
         assert default is Unset or len(default) == len(type_list)
 
@@ -103,8 +128,8 @@ class ListVar(_Var):
 
 
 class ComboVar(_Var):
-    def __init__(self, type_, values, default=Unset, desc=None):
-        super(ComboVar, self).__init__(default, desc)
+    def __init__(self, type_, values, default=Unset, *, desc=None):
+        super(ComboVar, self).__init__(default, desc=desc)
         self.type = type_
         self.values = values
         self.values_as_string = [type_.to_string(value) for value in values]
@@ -123,14 +148,14 @@ class ComboVar(_Var):
 
 
 class FileVar(Var):
-    def __init__(self, default=Unset, filters='', desc=None):
-        super(FileVar, self).__init__(String, default, desc)
+    def __init__(self, default=Unset, filters='', *, desc=None):
+        super(FileVar, self).__init__(String, default, desc=desc)
         self.filters = filters
 
 
 class DirVar(Var):
-    def __init__(self, default=Unset, desc=None):
-        super(DirVar, self).__init__(String, default, desc)
+    def __init__(self, default=Unset, *, desc=None):
+        super(DirVar, self).__init__(String, default, desc=desc)
 
 
 class OpenFileVar(FileVar):
@@ -150,20 +175,20 @@ class SaveTextFileVar(SaveFileVar):
 
 
 class RangeVar(Var):
-    def __init__(self, type_, lower, upper, default=Unset, desc=None, value_display_width=60):
-        super(RangeVar, self).__init__(type_, default, desc)
+    def __init__(self, type_, lower, upper, default=Unset, value_display_width=60, *, desc=None):
+        super(RangeVar, self).__init__(type_, default, desc=desc)
         self.lower = lower
         self.upper = upper
         self.value_display_width = value_display_width
 
 
 class IntRangeVar(RangeVar):
-    def __init__(self, lower, upper, default=Unset, desc=None, value_display_width=60):
-        super(IntRangeVar, self).__init__(Int, lower, upper, default, desc, value_display_width)
+    def __init__(self, lower, upper, default=Unset, value_display_width=60, *, desc=None):
+        super(IntRangeVar, self).__init__(Int, lower, upper, default, value_display_width, desc=desc)
 
 
 class FloatRangeVar(RangeVar):
-    def __init__(self, lower, upper, default=Unset, desc=None, value_display_width=60, steps=100, precision=2):
-        super(FloatRangeVar, self).__init__(Float, lower, upper, default, desc, value_display_width)
+    def __init__(self, lower, upper, default=Unset, value_display_width=60, steps=100, precision=2, desc=None):
+        super(FloatRangeVar, self).__init__(Float, lower, upper, default, value_display_width, desc=desc)
         self.steps = steps
         self.precision = precision

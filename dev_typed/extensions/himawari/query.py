@@ -6,12 +6,9 @@ from datetime import datetime, timezone, timedelta
 
 
 FTP_HOST = 'ftp.ptree.jaxa.jp'
-FTP_USER = 'capino627_163.com'
-FTP_PWD = 'SP+wari8'
-TIMEOUT = 5
 
 
-async def query(t, delta):
+async def query(FTP_USER, FTP_PWD, TIMEOUT, t, delta):
     d = 600
     t = t.astimezone(timezone.utc)
     t0 = datetime.fromtimestamp(round(t.timestamp() / d) * d, tz=timezone.utc)

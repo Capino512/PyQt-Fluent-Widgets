@@ -1,25 +1,19 @@
 
 
 import sys
+import time
 
 from pprint import pp
-
-
-# init_config = None
+from config import init_config
 
 
 def main(config_path='config.ini'):
-    # global init_config
-    # if init_config is None:
-    #     from .config import init_config
-
     config = init_config()
     config.load_ini(config_path)
-    pp(config.data)
+    pp(config)
+    time.sleep(3)
 
 
 if __name__ == '__main__':
-
-    from config import init_config
 
     main(*sys.argv[1:])
