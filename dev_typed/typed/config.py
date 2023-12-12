@@ -42,4 +42,4 @@ class Config(OrderedDict):
                     value = var(value)
                     var.set_value(value)
                 else:
-                    assert skip_error, f'fail to parse `{value}`'
+                    assert skip_error, f'fail to parse `{value}`, {section} - {option} - {var.get_desc()}'

@@ -46,3 +46,5 @@ print(os.path.isabs(''))
 print(os.path.isabs('temp'))
 print(os.path.isabs('d:/temp'))
 print(os.path.isabs('/temp'))
+
+os.startfile(r'D:\03\python\04\PyQt-Fluent-Widgets\dev_typed\extensions\himawari')

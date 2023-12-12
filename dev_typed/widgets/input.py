@@ -3,8 +3,10 @@
 import os
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QHBoxLayout, QFileDialog, QWidget, QVBoxLayout
-from qfluentwidgets import LineEdit, BodyLabel, ComboBox, CheckBox, PushButton, Slider, PasswordLineEdit, TextEdit
+from qfluentwidgets import LineEdit, BodyLabel, ComboBox, CheckBox, ToolButton, Slider, PasswordLineEdit, TextEdit, \
+    FluentIcon
 from typed import *
 
 
@@ -38,6 +40,9 @@ class DefaultInputWidget(LineEdit, _InputWidget):
     def get_value(self):
         return self.var(self.text())
 
+    def update_value(self):
+        self.setText(self.var.to_string())
+
 
 class PasswordInputWidget(PasswordLineEdit, _InputWidget):
     def __init__(self, var, parent=None):
@@ -53,6 +58,9 @@ class PasswordInputWidget(PasswordLineEdit, _InputWidget):
 
     def get_value(self):
         return self.var(self.text())
+
+    def update_value(self):
+        self.setText(self.var.to_string())
 
 
 class CheckInputWidget(CheckBox, _InputWidget):
@@ -128,7 +136,7 @@ class SliderInputWidget(QWidget, _InputWidget):
         self.slider2var = slider2var
 
     def get_value(self):
-        self.slider2var(self.slider.value())
+        return self.slider2var(self.slider.value())
 
 
 def dialog(is_file, is_input, filters='', parent=None):
@@ -165,8 +173,17 @@ class FileOrDirInputWidget(QWidget, _InputWidget):
         if var.has_value():
             line.setText(var.to_string())
 
-        btn = PushButton('...')
+        icon = QIcon(FluentIcon.MORE.path())
+        btn = ToolButton()
+        btn.setIcon(icon)
+        btn.setFixedWidth(btn.sizeHint().height())
         btn.clicked.connect(_dialog)
+
+        icon = QIcon(FluentIcon.FOLDER.path())
+        btn2 = ToolButton()
+        btn2.setIcon(icon)
+        btn2.setFixedWidth(btn.sizeHint().height())
+        btn2.clicked.connect(self.open_dir)
 
         layout.addWidget(line)
         layout.addWidget(btn)
@@ -174,12 +191,30 @@ class FileOrDirInputWidget(QWidget, _InputWidget):
 
         self.line = line
         self.var = var
+        self.is_file = is_file
+
+    def get_input_path(self, path=None):
+        if path is None:
+            path = self.line.text()
+        if not os.path.isabs(path):
+            path = os.path.join(self.var.cwd, path)
+        return path
+
+    def open_dir(self):
+        path = self.get_input_path()
+        if os.path.isfile(path) if self.is_file else os.path.isdir(path):
+            os.startfile(os.path.dirname(path))
 
     def validate(self):
         return self.var.validate(self.line.text())
 
     def get_value(self):
         return self.var(self.line.text())
+
+    def update_value(self):
+        path = self.get_input_path(self.var.get_value())
+        if os.path.isfile(path) if self.is_file else os.path.isdir(path):
+            self.line.setText(path)
 
 
 class TextFileInputWidget(QWidget, _InputWidget):
@@ -204,11 +239,21 @@ class TextFileInputWidget(QWidget, _InputWidget):
         if var.has_value():
             line.setText(var.to_string())
 
-        btn = PushButton('...')
+        icon = QIcon(FluentIcon.MORE.path())
+        btn = ToolButton()
+        btn.setIcon(icon)
+        btn.setFixedWidth(btn.sizeHint().height())
         btn.clicked.connect(_dialog)
+
+        icon = QIcon(FluentIcon.FOLDER.path())
+        btn2 = ToolButton()
+        btn2.setIcon(icon)
+        btn2.setFixedWidth(btn.sizeHint().height())
+        btn2.clicked.connect(self.open_dir)
 
         layout.addWidget(line)
         layout.addWidget(btn)
+        layout.addWidget(btn2)
 
         text = TextEdit()
         v_layout = QVBoxLayout()
@@ -225,14 +270,19 @@ class TextFileInputWidget(QWidget, _InputWidget):
         if is_input:
             self.load_text()
 
-    def get_input_path(self):
-        path = self.line.text()
+    def get_input_path(self, path=None):
+        if path is None:
+            path = self.line.text()
         if not os.path.isabs(path):
             path = os.path.join(self.var.cwd, path)
         return path
 
-    def load_text(self):
+    def open_dir(self):
         if os.path.isfile(path := self.get_input_path()):
+            os.startfile(os.path.dirname(path))
+
+    def load_text(self, path=None):
+        if os.path.isfile(path := self.get_input_path(path)):
             with open(path, 'rt', encoding='utf-8') as f:
                 self.text.setText(f.read())
 
@@ -247,8 +297,10 @@ class TextFileInputWidget(QWidget, _InputWidget):
         return self.var(self.line.text())
 
     def update_value(self):
+        if os.path.isfile(path := self.get_input_path(self.var.get_value())):
+            self.line.setText(path)
         if not self.is_input:
-            self.load_text()
+            self.load_text(self.var.get_value())
 
 
 def get_input_widget(var, parent=None):
