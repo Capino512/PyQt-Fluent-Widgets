@@ -80,3 +80,5 @@ if __name__ == '__main__':
     demo.show()
 
     app.exec()
+
+    # pyinstaller -F -w -p . main.py

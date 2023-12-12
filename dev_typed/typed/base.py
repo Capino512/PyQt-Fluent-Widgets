@@ -6,6 +6,11 @@ import configparser
 __all__ = ['Bool', 'Int', 'Float', 'String', 'Unset']
 
 
+BOOLEAN_STATES = configparser.ConfigParser.BOOLEAN_STATES
+# '1': True , 'yes': True, 'true': True  , 'on': True
+# '0': False, 'no': False, 'false': False, 'off': False
+
+
 class _Type:
     def __init__(self, name, from_string, to_string):
         self.name = name
@@ -17,11 +22,8 @@ class _Type:
 
 
 def string2bool(value):
-    # '1': True , 'yes': True, 'true': True  , 'on': True
-    # '0': False, 'no': False, 'false': False, 'off': False
-    if value.lower() not in configparser.ConfigParser.BOOLEAN_STATES:
-        raise ValueError('Not a boolean: %s' % value)
-    return configparser.ConfigParser.BOOLEAN_STATES[value.lower()]
+    assert value in BOOLEAN_STATES, 'Not a boolean: %s' % value
+    return BOOLEAN_STATES[value.lower()]
 
 
 def bool2string(value):

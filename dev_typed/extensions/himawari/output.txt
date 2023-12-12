@@ -1,0 +1,2 @@
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202308/30/NC_H09_20230830_1810_R21_FLDK.06001_06001.nc
+ftp://ftp.ptree.jaxa.jp/jma/netcdf/202308/30/NC_H09_20230830_1800_R21_FLDK.06001_06001.nc

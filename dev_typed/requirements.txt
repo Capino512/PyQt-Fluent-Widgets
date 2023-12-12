@@ -4,3 +4,4 @@ pyinstaller
 # himawari
 pendulum
 aioftp
+aria2p[tui]

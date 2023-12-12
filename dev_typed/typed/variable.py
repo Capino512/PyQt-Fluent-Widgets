@@ -4,7 +4,8 @@ from .base import *
 
 
 __all__ = ['Var', 'BoolVar', 'IntVar', 'FloatVar', 'StringVar', 'PasswordVar', 'ArrayVar', 'ListVar', 'ComboVar',
-           'FileVar', 'OpenFileVar', 'OpenTextFileVar', 'SaveFileVar', 'SaveTextFileVar', 'DirVar',
+           'InputFileOrDir', 'OutputFileOrDir', 'TextFile', 'FileVar', 'DirVar',
+           'InputFileVar', 'OutputFileVar', 'InputTextFileVar', 'OutputTextFileVar', 'InputDirVar', 'OutputDirVar',
            'RangeVar', 'IntRangeVar', 'FloatRangeVar']
 
 
@@ -44,8 +45,12 @@ class _Var:
     def from_string(self, value):
         return self._default if (value == '' and self._default is not Unset) else self._from_string(value)
 
+    def validate(self, value):
+        return True
+
     def __call__(self, value):
         return self.from_string(value)
+
 
 # validate  # todo
 # correct
@@ -64,20 +69,66 @@ class Var(_Var):
     def _from_string(self, value):
         return self.type(value)
 
+    def validate(self, value):
+        try:
+            self.from_string(value)
+            return True
+        except:
+            return False
+
 
 class BoolVar(Var):
     def __init__(self, default=Unset, *, desc=None):
         super(BoolVar, self).__init__(Bool, default, desc=desc)
 
 
-class IntVar(Var):
-    def __init__(self, default=Unset, *, desc=None):
-        super(IntVar, self).__init__(Int, default, desc=desc)
+class NumberVar(Var):
+    def __init__(self, type_, default=Unset, lower=None, upper=None, *, desc=None):
+        super(NumberVar, self).__init__(type_, default, desc=desc)
+        self.lower = lower
+        self.upper = upper
+
+    def validate(self, value):
+        if super().validate(value):
+            value = self(value)
+            return (self.lower is None or value >= self.lower) and (self.upper is None or value <= self.upper)
+        return False
 
 
-class FloatVar(Var):
-    def __init__(self, default=Unset, *, desc=None):
-        super(FloatVar, self).__init__(Float, default, desc=desc)
+class IntVar(NumberVar):
+    def __init__(self, default=Unset, lower=None, upper=None, *, desc=None):
+        super(IntVar, self).__init__(Int, default, lower, upper, desc=desc)
+
+
+class FloatVar(NumberVar):
+    def __init__(self, default=Unset, lower=None, upper=None, *, desc=None):
+        super(FloatVar, self).__init__(Float, default, lower, upper, desc=desc)
+
+
+class RangeVar(Var):
+    def __init__(self, type_, lower, upper, default=Unset, value_display_width=60, *, desc=None):
+        super(RangeVar, self).__init__(type_, default, desc=desc)
+        self.lower = lower
+        self.upper = upper
+        self.value_display_width = value_display_width
+
+    def validate(self, value):
+        if super().validate(value):
+            value = self(value)
+            return (self.lower is None or value >= self.lower) and (self.upper is None or value <= self.upper)
+        return False
+
+
+class IntRangeVar(RangeVar):
+    def __init__(self, lower, upper, default=Unset, value_display_width=60, *, desc=None):
+        super(IntRangeVar, self).__init__(Int, lower, upper, default, value_display_width, desc=desc)
+
+
+class FloatRangeVar(RangeVar):
+    def __init__(self, lower, upper, default=Unset, steps=100, precision=2, value_display_width=60, desc=None):
+        super(FloatRangeVar, self).__init__(Float, lower, upper, default, value_display_width, desc=desc)
+        self.steps = steps
+        self.precision = precision
 
 
 class StringVar(Var):
@@ -85,9 +136,8 @@ class StringVar(Var):
         super(StringVar, self).__init__(String, default, desc=desc)
 
 
-class PasswordVar(Var):
-    def __init__(self, default=Unset, *, desc=None):
-        super(PasswordVar, self).__init__(String, default, desc=desc)
+class PasswordVar(StringVar):
+    pass
 
 
 class ArrayVar(_Var):
@@ -152,43 +202,49 @@ class FileVar(Var):
         super(FileVar, self).__init__(String, default, desc=desc)
         self.filters = filters
 
+    def validate(self, value):
+        return value != '' or (self._default is not Unset)
+
 
 class DirVar(Var):
     def __init__(self, default=Unset, *, desc=None):
         super(DirVar, self).__init__(String, default, desc=desc)
 
+    def validate(self, value):
+        return value != '' or (self._default is not Unset)
 
-class OpenFileVar(FileVar):
+
+class InputFileOrDir:
     pass
 
 
-class OpenTextFileVar(OpenFileVar):
+class OutputFileOrDir:
     pass
 
 
-class SaveFileVar(FileVar):
+class TextFile:
     pass
 
 
-class SaveTextFileVar(SaveFileVar):
+class InputFileVar(FileVar, InputFileOrDir):
     pass
 
 
-class RangeVar(Var):
-    def __init__(self, type_, lower, upper, default=Unset, value_display_width=60, *, desc=None):
-        super(RangeVar, self).__init__(type_, default, desc=desc)
-        self.lower = lower
-        self.upper = upper
-        self.value_display_width = value_display_width
+class OutputFileVar(FileVar, OutputFileOrDir):
+    pass
 
 
-class IntRangeVar(RangeVar):
-    def __init__(self, lower, upper, default=Unset, value_display_width=60, *, desc=None):
-        super(IntRangeVar, self).__init__(Int, lower, upper, default, value_display_width, desc=desc)
+class InputTextFileVar(InputFileVar, TextFile):
+    pass
 
 
-class FloatRangeVar(RangeVar):
-    def __init__(self, lower, upper, default=Unset, value_display_width=60, steps=100, precision=2, desc=None):
-        super(FloatRangeVar, self).__init__(Float, lower, upper, default, value_display_width, desc=desc)
-        self.steps = steps
-        self.precision = precision
+class OutputTextFileVar(OutputFileVar, TextFile):
+    pass
+
+
+class InputDirVar(DirVar, InputFileOrDir):
+    pass
+
+
+class OutputDirVar(DirVar, OutputFileOrDir):
+    pass

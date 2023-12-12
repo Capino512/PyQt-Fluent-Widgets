@@ -22,11 +22,11 @@ class Config(OrderedDict):
     def dump_ini(self, path):
         parser = configparser.ConfigParser(allow_no_value=True)
         parser.optionxform = str  # upper case
-        for section, values in self.items():
+        for section, options in self.items():
             parser.add_section(section)
-            for option, value in values.items():
-                parser.set(section=section, option=f';{value.get_desc()}')
-                parser.set(section=section, option=option, value=value.to_string())
+            for option, var in options.items():
+                parser.set(section=section, option=f';{var.get_desc()}')
+                parser.set(section=section, option=option, value=var.to_string())
         with open(path, 'wt', encoding='utf-8') as f:
             parser.write(f)
 
@@ -34,11 +34,12 @@ class Config(OrderedDict):
         parser = configparser.ConfigParser()
         parser.optionxform = str  # upper case
         parser.read(path, encoding='utf-8')
-        for section, values in self.items():
-            for option, value in values.items():
-                try:
-                    _value = value(parser.get(section, option))
-                    value.set_value(_value)
-                except Exception as e:
-                    if not skip_error:
-                        raise e
+        for section, options in self.items():
+            for option, var in options.items():
+                value = parser.get(section, option)
+                validate = var.validate(value)
+                if validate:
+                    value = var(value)
+                    var.set_value(value)
+                else:
+                    assert skip_error, f'fail to parse `{value}`'

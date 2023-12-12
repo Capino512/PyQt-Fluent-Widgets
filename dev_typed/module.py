@@ -29,7 +29,7 @@ class Module(QWidget):
         scroll.setWidgetResizable(True)
         widget = QWidget()
         widget.setMinimumWidth(500)
-        widget.setMaximumWidth(800)
+        # widget.setMaximumWidth(800)
 
         btn_start = PrimaryPushButton('start')
         btn_cancel = PrimaryPushButton('cancel')
@@ -73,6 +73,7 @@ class Module(QWidget):
 
     def init(self):
         vbox = self.vbox
+        cwd = os.path.abspath(self.module_dir)
 
         items = [vbox.itemAt(i) for i in range(vbox.count())]
         for item in items:
@@ -81,15 +82,17 @@ class Module(QWidget):
             vbox.removeItem(item)
         self.values.clear()
 
-        for section, values in self.config.items():
+        for section, options in self.config.items():
             box = QGroupBox(section.capitalize())
             layout = QFormLayout()
-            for option, value in values.items():
+            for option, var in options.items():
                 label = BodyLabel(option.capitalize())
                 label.setFixedWidth(100)
-                w, get_value = get_input_widget(value, self)
-                layout.addRow(label, w)
-                self.values.append([value, get_value])
+                label.setFixedHeight(33)
+                setattr(var, 'cwd', cwd)
+                widget = get_input_widget(var, self)
+                layout.addRow(label, widget)
+                self.values.append([var, label, widget])
             box.setLayout(layout)
             vbox.addWidget(box)
         vbox.addStretch()
@@ -105,6 +108,9 @@ class Module(QWidget):
         self.btn_cancel.hide()
         self.progress_bar.hide()
         self.text_area.append(f'Exit code: {code}')
+        if code == 0:
+            for var, label, widget in self.values:
+                widget.update_value()
 
     def on_cancel(self):
         self.thread.force_stop()
@@ -113,14 +119,24 @@ class Module(QWidget):
         self.text_area.append(line)
 
     def reset(self):
-        for value, _ in self.values:
-            value.reset()
+        for var, label, widget in self.values:
+            var.reset()
         self.init()
 
     def parse(self):
-        for value, get_value in self.values:
-            value.set_value(get_value())
-        self.config.dump_ini(self.config_path)
+        validates = []
+        for var, label, widget in self.values:
+            validate = widget.validate()
+            validates.append(validate)
+            if validate:
+                label.setStyleSheet('')
+                var.set_value(widget.get_value())
+            else:
+                label.setStyleSheet('border: 1px solid rgba(255, 0, 0, 200);')
+        validate = all(validates)
+        if validate:
+            self.config.dump_ini(self.config_path)
+        return validate
 
     def run_in_background(self):
         cwd = os.path.abspath(self.module_dir)
@@ -133,5 +149,5 @@ class Module(QWidget):
         thread.start()
 
     def start(self):
-        self.parse()
-        self.run_in_background()
+        if self.parse():
+            self.run_in_background()

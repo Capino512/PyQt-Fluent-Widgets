@@ -3,141 +3,268 @@
 import os
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QHBoxLayout, QFileDialog
-from qfluentwidgets import LineEdit, BodyLabel, ComboBox, CheckBox, PushButton, Slider, PasswordLineEdit
+from PySide6.QtWidgets import QHBoxLayout, QFileDialog, QWidget, QVBoxLayout
+from qfluentwidgets import LineEdit, BodyLabel, ComboBox, CheckBox, PushButton, Slider, PasswordLineEdit, TextEdit
 from typed import *
 
 
 CURRENT_DIR = '.'
 
 
-def default_input_widget(value):
-    w = (PasswordLineEdit if isinstance(value, PasswordVar) else LineEdit)()
-    w.setClearButtonEnabled(True)
-    if value.has_value():
-        w.setText(value.to_string())
-    w.setToolTip(value.get_desc())
+class _InputWidget:
+    def validate(self):
+        return True
 
-    def get_value():
-        return value(w.text())
+    def get_value(self):
+        raise NotImplementedError
 
-    return w, get_value
+    def update_value(self):
+        pass
 
 
-def combo_input_widget(value):
-    w = ComboBox()
-    w.addItems(value.values_as_string)
-    if value.has_value():
-        w.setText(value.to_string())
-    w.setToolTip(value.get_desc())
+class DefaultInputWidget(LineEdit, _InputWidget):
 
-    def get_value():
-        return value.values[w.currentIndex()]
+    def __init__(self, var, parent=None):
+        super(DefaultInputWidget, self).__init__(parent)
+        self.setClearButtonEnabled(True)
+        self.setToolTip(var.get_desc())
+        if var.has_value():
+            self.setText(var.to_string())
+        self.var = var
 
-    return w, get_value
+    def validate(self):
+        return self.var.validate(self.text())
 
-
-def bool_input_widget(value):
-    w = CheckBox()
-    if value.has_value():
-        w.setChecked(value.get_value())
-    else:
-        w.setCheckState(Qt.CheckState.PartiallyChecked)
-    w.setToolTip(value.get_desc())
-
-    def get_value():
-        state = w.checkState()
-        assert state is not Qt.CheckState.PartiallyChecked
-        return state is Qt.CheckState.Checked
-
-    return w, get_value
+    def get_value(self):
+        return self.var(self.text())
 
 
-def file_input_widget(value, parent=None):
-    # "Images (*.png *.jpg *.bmp)"
+class PasswordInputWidget(PasswordLineEdit, _InputWidget):
+    def __init__(self, var, parent=None):
+        super(PasswordInputWidget, self).__init__(parent)
+        self.setClearButtonEnabled(True)
+        self.setToolTip(var.get_desc())
+        if var.has_value():
+            self.setText(var.to_string())
+        self.var = var
 
-    is_file = isinstance(value, FileVar)
-    is_open = isinstance(value, OpenFileVar)
-    filters = value.filters if is_file else ''
+    def validate(self):
+        return self.var.validate(self.text())
 
-    def dialog():
-        global CURRENT_DIR
-        if is_file:
-            selected, _ = (QFileDialog.getOpenFileName if is_open else QFileDialog.getSaveFileName)(parent, '选择文件', CURRENT_DIR, filters)
-            dir_ = os.path.dirname(selected)
+    def get_value(self):
+        return self.var(self.text())
+
+
+class CheckInputWidget(CheckBox, _InputWidget):
+    def __init__(self, var, parent=None):
+        super(CheckInputWidget, self).__init__(parent)
+        self.setToolTip(var.get_desc())
+        if var.has_value():
+            self.setChecked(var.get_value())
         else:
-            selected = dir_ = QFileDialog.getExistingDirectory(parent, '选择文件夹', CURRENT_DIR)
-        if selected:
-            CURRENT_DIR = dir_
-            line.setText(selected)
+            self.setCheckState(Qt.CheckState.PartiallyChecked)
+        self.var = var
 
-    layout = QHBoxLayout()
-    line = LineEdit()
-    btn = PushButton('...')
+    def validate(self):
+        return self.checkState() is not Qt.CheckState.PartiallyChecked
 
-    if value.has_value():
-        line.setText(value.to_string())
-    line.setToolTip(value.get_desc())
-
-    layout.addWidget(line)
-    layout.addWidget(btn)
-    btn.clicked.connect(dialog)
-
-    def get_value():
-        return line.text()
-
-    return layout, get_value
+    def get_value(self):
+        return self.checkState() is Qt.CheckState.Checked
 
 
-def range_input_widget(value):
-    lower = value.lower
-    upper = value.upper
-    is_float = isinstance(value, FloatRangeVar)
-    steps = value.steps if is_float else (upper - lower)
-    minimum, maximum = (0, steps) if is_float else (lower, upper)
-    fmt = f'%.{value.precision}f' if is_float else '%d'
+class ComboInputWidget(ComboBox, _InputWidget):
+    def __init__(self, var, parent=None):
+        super(ComboInputWidget, self).__init__(parent)
+        self.addItems(var.values_as_string)
+        self.setToolTip(var.get_desc())
+        if var.has_value():
+            self.setText(var.to_string())
+        self.var = var
 
-    def raw2slider(x):
-        return round((x - lower) / (upper - lower) * steps) if is_float else x
-
-    def slider2raw(x):
-        return (x / steps * (upper - lower) + lower) if is_float else x
-
-    def set_text(x):
-        label.setText(fmt % slider2raw(x))
-
-    layout = QHBoxLayout()
-    slider = Slider()
-    label = BodyLabel()
-    label.setFixedWidth(value.value_display_width)
-
-    slider.setRange(minimum, maximum)
-    if value.has_value():
-        slider.setValue(raw2slider(value.get_value()))
-    set_text(slider.value())
-
-    slider.setOrientation(Qt.Orientation.Horizontal)
-    slider.setToolTip(value.get_desc())
-    slider.valueChanged.connect(set_text)
-
-    layout.addWidget(slider)
-    layout.addWidget(label)
-
-    def get_value():
-        return slider2raw(slider.value())
-
-    return layout, get_value
+    def get_value(self):
+        return self.var.values[self.currentIndex()]
 
 
-def get_input_widget(value, parent=None):
-    if isinstance(value, ComboVar):
-        w, get_value = combo_input_widget(value)
-    elif isinstance(value, BoolVar):
-        w, get_value = bool_input_widget(value)
-    elif isinstance(value, (FileVar, DirVar)):
-        w, get_value = file_input_widget(value, parent)
-    elif isinstance(value, RangeVar):
-        w, get_value = range_input_widget(value)
+class SliderInputWidget(QWidget, _InputWidget):
+    def __init__(self, var, parent=None):
+        super(SliderInputWidget, self).__init__(parent)
+
+        lower = var.lower
+        upper = var.upper
+        is_float = isinstance(var, FloatRangeVar)
+        steps = var.steps if is_float else (upper - lower)
+        minimum, maximum = (0, steps) if is_float else (lower, upper)
+        fmt = f'%.{var.precision}f' if is_float else '%d'
+
+        def var2slider(x):
+            return round((x - lower) / (upper - lower) * steps) if is_float else x
+
+        def slider2var(x):
+            return (x / steps * (upper - lower) + lower) if is_float else x
+
+        def update_label(x):
+            label.setText(fmt % slider2var(x))
+
+        layout = QHBoxLayout()
+
+        slider = Slider()
+        slider.setToolTip(var.get_desc())
+        slider.setOrientation(Qt.Orientation.Horizontal)
+        slider.setRange(minimum, maximum)
+        slider.valueChanged.connect(update_label)
+        if var.has_value():
+            slider.setValue(var2slider(var.get_value()))
+
+        label = BodyLabel()
+        label.setFixedWidth(var.value_display_width)
+        update_label(slider.value())
+
+        layout.addWidget(slider)
+        layout.addWidget(label)
+        self.setLayout(layout)
+
+        self.slider = slider
+        self.var = var
+        self.slider2var = slider2var
+
+    def get_value(self):
+        self.slider2var(self.slider.value())
+
+
+def dialog(is_file, is_input, filters='', parent=None):
+    global CURRENT_DIR
+    if is_file:
+        method = QFileDialog.getOpenFileName if is_input else QFileDialog.getSaveFileName
+        selected, _ = method(parent, '选择文件', CURRENT_DIR, filters)
+        dir_ = os.path.dirname(selected)
     else:
-        w, get_value = default_input_widget(value)
-    return w, get_value
+        selected = dir_ = QFileDialog.getExistingDirectory(parent, '选择文件夹', CURRENT_DIR)
+    if selected:
+        CURRENT_DIR = dir_
+    return selected
+
+
+class FileOrDirInputWidget(QWidget, _InputWidget):
+    def __init__(self, var, parent=None):
+        super(FileOrDirInputWidget, self).__init__(parent)
+
+        is_file = isinstance(var, FileVar)
+        is_input = isinstance(var, InputFileOrDir)
+        filters = var.filters if is_file else ''
+
+        def _dialog():
+            selected = dialog(is_file, is_input, filters, parent)
+            if selected:
+                line.setText(selected)
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        line = LineEdit()
+        line.setToolTip(var.get_desc())
+        if var.has_value():
+            line.setText(var.to_string())
+
+        btn = PushButton('...')
+        btn.clicked.connect(_dialog)
+
+        layout.addWidget(line)
+        layout.addWidget(btn)
+        self.setLayout(layout)
+
+        self.line = line
+        self.var = var
+
+    def validate(self):
+        return self.var.validate(self.line.text())
+
+    def get_value(self):
+        return self.var(self.line.text())
+
+
+class TextFileInputWidget(QWidget, _InputWidget):
+    def __init__(self, var, parent=None):
+        super(TextFileInputWidget, self).__init__(parent)
+
+        is_input = isinstance(var, InputFileOrDir)
+        filters = var.filters
+
+        def _dialog():
+            selected = dialog(True, is_input, filters, parent)
+            if selected:
+                line.setText(selected)
+                if self.is_input:
+                    self.load_text()
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        line = LineEdit()
+        line.setToolTip(var.get_desc())
+        if var.has_value():
+            line.setText(var.to_string())
+
+        btn = PushButton('...')
+        btn.clicked.connect(_dialog)
+
+        layout.addWidget(line)
+        layout.addWidget(btn)
+
+        text = TextEdit()
+        v_layout = QVBoxLayout()
+        v_layout.setContentsMargins(0, 0, 0, 0)
+        v_layout.addLayout(layout)
+        v_layout.addWidget(text)
+        self.setLayout(v_layout)
+
+        self.line = line
+        self.text = text
+        self.var = var
+        self.is_input = is_input
+
+        if is_input:
+            self.load_text()
+
+    def get_input_path(self):
+        path = self.line.text()
+        if not os.path.isabs(path):
+            path = os.path.join(self.var.cwd, path)
+        return path
+
+    def load_text(self):
+        if os.path.isfile(path := self.get_input_path()):
+            with open(path, 'rt', encoding='utf-8') as f:
+                self.text.setText(f.read())
+
+    def validate(self):
+        return self.var.validate(self.line.text())
+
+    def get_value(self):
+        if self.is_input:
+            if os.path.isfile(path := self.get_input_path()):
+                with open(path, 'wt', encoding='utf-8') as f:
+                    f.write(self.text.toPlainText())
+        return self.var(self.line.text())
+
+    def update_value(self):
+        if not self.is_input:
+            self.load_text()
+
+
+def get_input_widget(var, parent=None):
+    if isinstance(var, BoolVar):
+        widget = CheckInputWidget
+    elif isinstance(var, PasswordVar):
+        widget = PasswordInputWidget
+    elif isinstance(var, ComboVar):
+        widget = ComboInputWidget
+    elif isinstance(var, RangeVar):
+        widget = SliderInputWidget
+    elif isinstance(var, (FileVar, DirVar)):
+        if isinstance(var, TextFile):
+            widget = TextFileInputWidget
+        else:
+            widget = FileOrDirInputWidget
+    else:
+        widget = DefaultInputWidget
+    return widget(var, parent)
