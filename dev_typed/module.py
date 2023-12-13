@@ -46,7 +46,7 @@ class Module(QWidget):
         text_area = TextEdit()
         text_area.setReadOnly(True)
         text_area.setMinimumHeight(120)
-        text_area.setMaximumHeight(160)
+        text_area.setMaximumHeight(240)
 
         hbox = QHBoxLayout()
         hbox.addWidget(btn_start, Qt.AlignmentFlag.AlignLeft)
@@ -89,8 +89,7 @@ class Module(QWidget):
                 label = BodyLabel(option.capitalize())
                 label.setFixedWidth(100)
                 label.setFixedHeight(33)
-                setattr(var, 'cwd', cwd)
-                widget = get_input_widget(var, self)
+                widget = get_input_widget(var, cwd, self)
                 layout.addRow(label, widget)
                 self.values.append([var, label, widget])
             box.setLayout(layout)

@@ -40,9 +40,6 @@ class DefaultInputWidget(LineEdit, _InputWidget):
     def get_value(self):
         return self.var(self.text())
 
-    def update_value(self):
-        self.setText(self.var.to_string())
-
 
 class PasswordInputWidget(PasswordLineEdit, _InputWidget):
     def __init__(self, var, parent=None):
@@ -58,9 +55,6 @@ class PasswordInputWidget(PasswordLineEdit, _InputWidget):
 
     def get_value(self):
         return self.var(self.text())
-
-    def update_value(self):
-        self.setText(self.var.to_string())
 
 
 class CheckInputWidget(CheckBox, _InputWidget):
@@ -193,9 +187,8 @@ class FileOrDirInputWidget(QWidget, _InputWidget):
         self.var = var
         self.is_file = is_file
 
-    def get_input_path(self, path=None):
-        if path is None:
-            path = self.line.text()
+    def get_input_path(self):
+        path = self.line.text()
         if not os.path.isabs(path):
             path = os.path.join(self.var.cwd, path)
         return path
@@ -210,11 +203,6 @@ class FileOrDirInputWidget(QWidget, _InputWidget):
 
     def get_value(self):
         return self.var(self.line.text())
-
-    def update_value(self):
-        path = self.get_input_path(self.var.get_value())
-        if os.path.isfile(path) if self.is_file else os.path.isdir(path):
-            self.line.setText(path)
 
 
 class TextFileInputWidget(QWidget, _InputWidget):
@@ -256,6 +244,8 @@ class TextFileInputWidget(QWidget, _InputWidget):
         layout.addWidget(btn2)
 
         text = TextEdit()
+        if not is_input:
+            text.setReadOnly(True)
         v_layout = QVBoxLayout()
         v_layout.setContentsMargins(0, 0, 0, 0)
         v_layout.addLayout(layout)
@@ -270,9 +260,8 @@ class TextFileInputWidget(QWidget, _InputWidget):
         if is_input:
             self.load_text()
 
-    def get_input_path(self, path=None):
-        if path is None:
-            path = self.line.text()
+    def get_input_path(self):
+        path = self.line.text()
         if not os.path.isabs(path):
             path = os.path.join(self.var.cwd, path)
         return path
@@ -281,8 +270,8 @@ class TextFileInputWidget(QWidget, _InputWidget):
         if os.path.isfile(path := self.get_input_path()):
             os.startfile(os.path.dirname(path))
 
-    def load_text(self, path=None):
-        if os.path.isfile(path := self.get_input_path(path)):
+    def load_text(self):
+        if os.path.isfile(path := self.get_input_path()):
             with open(path, 'rt', encoding='utf-8') as f:
                 self.text.setText(f.read())
 
@@ -297,13 +286,11 @@ class TextFileInputWidget(QWidget, _InputWidget):
         return self.var(self.line.text())
 
     def update_value(self):
-        if os.path.isfile(path := self.get_input_path(self.var.get_value())):
-            self.line.setText(path)
         if not self.is_input:
-            self.load_text(self.var.get_value())
+            self.load_text()
 
 
-def get_input_widget(var, parent=None):
+def get_input_widget(var, cwd, parent=None):
     if isinstance(var, BoolVar):
         widget = CheckInputWidget
     elif isinstance(var, PasswordVar):
@@ -313,6 +300,7 @@ def get_input_widget(var, parent=None):
     elif isinstance(var, RangeVar):
         widget = SliderInputWidget
     elif isinstance(var, (FileVar, DirVar)):
+        setattr(var, 'cwd', cwd)
         if isinstance(var, TextFile):
             widget = TextFileInputWidget
         else:

@@ -46,14 +46,16 @@ class _Var:
         return self._default if (value == '' and self._default is not Unset) else self._from_string(value)
 
     def validate(self, value):
-        return True
+        try:
+            self.from_string(value)
+            return True
+        except:
+            return False
 
     def __call__(self, value):
         return self.from_string(value)
 
 
-# validate  # todo
-# correct
 class Var(_Var):
     def __init__(self, type_, default=Unset, *, desc=None):
         super(Var, self).__init__(default, desc=desc)
@@ -69,13 +71,6 @@ class Var(_Var):
     def _from_string(self, value):
         return self.type(value)
 
-    def validate(self, value):
-        try:
-            self.from_string(value)
-            return True
-        except:
-            return False
-
 
 class BoolVar(Var):
     def __init__(self, default=Unset, *, desc=None):
@@ -88,11 +83,10 @@ class NumberVar(Var):
         self.lower = lower
         self.upper = upper
 
-    def validate(self, value):
-        if super().validate(value):
-            value = self(value)
-            return (self.lower is None or value >= self.lower) and (self.upper is None or value <= self.upper)
-        return False
+    def _from_string(self, value):
+        value = super()._from_string(value)
+        assert (self.lower is None or value >= self.lower) and (self.upper is None or value <= self.upper)
+        return value
 
 
 class IntVar(NumberVar):
@@ -105,18 +99,10 @@ class FloatVar(NumberVar):
         super(FloatVar, self).__init__(Float, default, lower, upper, desc=desc)
 
 
-class RangeVar(Var):
+class RangeVar(NumberVar):
     def __init__(self, type_, lower, upper, default=Unset, value_display_width=60, *, desc=None):
-        super(RangeVar, self).__init__(type_, default, desc=desc)
-        self.lower = lower
-        self.upper = upper
+        super(RangeVar, self).__init__(type_, default, lower, upper, desc=desc)
         self.value_display_width = value_display_width
-
-    def validate(self, value):
-        if super().validate(value):
-            value = self(value)
-            return (self.lower is None or value >= self.lower) and (self.upper is None or value <= self.upper)
-        return False
 
 
 class IntRangeVar(RangeVar):
@@ -202,16 +188,18 @@ class FileVar(Var):
         super(FileVar, self).__init__(String, default, desc=desc)
         self.filters = filters
 
-    def validate(self, value):
-        return value != '' or (self._default is not Unset)
+    def _from_string(self, value):
+        assert value != '' or (self._default is not Unset)
+        return super()._from_string(value)
 
 
 class DirVar(Var):
     def __init__(self, default=Unset, *, desc=None):
         super(DirVar, self).__init__(String, default, desc=desc)
 
-    def validate(self, value):
-        return value != '' or (self._default is not Unset)
+    def _from_string(self, value):
+        assert value != '' or (self._default is not Unset)
+        return super()._from_string(value)
 
 
 class InputFileOrDir:

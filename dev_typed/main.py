@@ -81,4 +81,5 @@ if __name__ == '__main__':
 
     app.exec()
 
+    # conda activate PySide6-Fluent-Widgets
     # pyinstaller -F -w -p . main.py

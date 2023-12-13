@@ -85,4 +85,10 @@ if __name__ == '__main__':
 
     main(*sys.argv[1:])
 
-    # pyinstaller -F -c -p . -p  D:\project\python\01\PyQt-Fluent-Widgets\dev_typed main.py
+    # conda activate PySide6-Fluent-Widgets
+
+    # y7000
+    # pyinstaller -F -c -p . -p D:\project\python\01\PyQt-Fluent-Widgets\dev_typed main.py
+
+    # xps
+    # pyinstaller -F -c -p . -p D:\03\python\04\PyQt-Fluent-Widgets\dev_typed main.py
