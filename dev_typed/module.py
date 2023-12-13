@@ -15,11 +15,12 @@ from widgets import get_input_widget
 # module/main.py
 
 class Module(QWidget):
-    def __init__(self, module_dir, execute, config_path, config, parent=None):
+    def __init__(self, module_dir, execute, config_path, config, ui_config, parent=None):
         super(Module, self).__init__(parent)
 
         self.values = []
         self.config = config
+        self.ui_config = ui_config
         self.config_path = config_path
         self.module_dir = module_dir
         self.execute = execute
@@ -28,16 +29,16 @@ class Module(QWidget):
         scroll = SmoothScrollArea()
         scroll.setWidgetResizable(True)
         widget = QWidget()
-        widget.setMinimumWidth(500)
+        widget.setMinimumWidth(ui_config.get_option('module', 'min_width'))
         # widget.setMaximumWidth(800)
 
         btn_start = PrimaryPushButton('start')
         btn_cancel = PrimaryPushButton('cancel')
         btn_reset = PrimaryPushButton('reset')
         progress_bar = IndeterminateProgressBar()
-        btn_start.setFixedWidth(100)
-        btn_cancel.setFixedWidth(100)
-        btn_reset.setFixedWidth(100)
+        btn_start.setFixedWidth(ui_config.get_option('module', 'btn_width'))
+        btn_cancel.setFixedWidth(ui_config.get_option('module', 'btn_width'))
+        btn_reset.setFixedWidth(ui_config.get_option('module', 'btn_width'))
         btn_cancel.hide()
         progress_bar.hide()
         btn_start.clicked.connect(self.start)
@@ -45,8 +46,8 @@ class Module(QWidget):
         btn_reset.clicked.connect(self.reset)
         text_area = TextEdit()
         text_area.setReadOnly(True)
-        text_area.setMinimumHeight(120)
-        text_area.setMaximumHeight(240)
+        text_area.setMinimumHeight(ui_config.get_option('module', 'text_area_min_width'))
+        text_area.setMaximumHeight(ui_config.get_option('module', 'text_area_max_width'))
 
         hbox = QHBoxLayout()
         hbox.addWidget(btn_start, Qt.AlignmentFlag.AlignLeft)
@@ -87,8 +88,8 @@ class Module(QWidget):
             layout = QFormLayout()
             for option, var in options.items():
                 label = BodyLabel(option.capitalize())
-                label.setFixedWidth(100)
-                label.setFixedHeight(33)
+                label.setFixedWidth(self.ui_config.get_option('module', 'label_width'))
+                label.setFixedHeight(self.ui_config.get_option('module', 'label_height'))
                 widget = get_input_widget(var, cwd, self)
                 layout.addRow(label, widget)
                 self.values.append([var, label, widget])
@@ -131,7 +132,7 @@ class Module(QWidget):
                 label.setStyleSheet('')
                 var.set_value(widget.get_value())
             else:
-                label.setStyleSheet('border: 1px solid rgba(255, 0, 0, 200);')
+                label.setStyleSheet(f'border: 1px solid {self.ui_config.get_option("module", "label_warning_color")};')
         validate = all(validates)
         if validate:
             self.config.dump_ini(self.config_path)

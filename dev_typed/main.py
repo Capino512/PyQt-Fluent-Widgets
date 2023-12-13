@@ -5,11 +5,11 @@ import sys
 import importlib
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtWidgets import QApplication, QWidget, QHBoxLayout, QListWidgetItem
 from qfluentwidgets import ListWidget
-from qframelesswindow import FramelessMainWindow
-from utils import init_module_config, parse_input_config
+from qframelesswindow import FramelessMainWindow, StandardTitleBar
+from utils import init_main_config, init_module_config, parse_input_config
 from widgets import TabWidget
 from module import Module
 
@@ -18,14 +18,23 @@ class Demo(FramelessMainWindow):
     def __init__(self):
         super(Demo, self).__init__()
 
+        config = init_main_config()
+        # config.dump_ini('config.ini')
+        config.load_ini('config.ini')
+        self.config = config
+
+        self.setTitleBar(StandardTitleBar(self))
+        self.setWindowTitle(config.get_option('main_win', 'title'))
+        self.setWindowIcon(QIcon(config.get_option('main_win', 'icon')))
+
         h = self.titleBar.height()
         self.setContentsMargins(0, h, 0, 0)
         widget = QWidget()
 
         h_layout = QHBoxLayout()
         module_list = ListWidget()
-        module_list.setMinimumWidth(120)
-        module_list.setMaximumWidth(160)
+        module_list.setMinimumWidth(config.get_option('module_list', 'min_width'))
+        module_list.setMaximumWidth(config.get_option('module_list', 'max_width'))
         module_list.itemDoubleClicked.connect(self.add_tab)
 
         tab_widget = TabWidget()
@@ -35,7 +44,7 @@ class Demo(FramelessMainWindow):
 
         self.tab_widget = tab_widget
         self.setCentralWidget(widget)
-        self.resize(W, H)
+        self.resize(config.get_option('main_win', 'win_width'), config.get_option('main_win', 'win_height'))
         self.center()
 
         for module in os.listdir('./extensions'):
@@ -59,7 +68,8 @@ class Demo(FramelessMainWindow):
         config_path = os.path.join(module_dir, module_config.get_option('module', 'config'))
         mode = 'r' if os.path.exists(config_path) else 'w'
         input_config = parse_input_config(importlib.import_module(module_pkg).init_config, config_path, mode)
-        self.tab_widget.add_tab(module_config.get_option('module', 'name'), Module(module_dir, execute, config_path, input_config))
+        module = Module(module_dir, execute, config_path, input_config, self.config)
+        self.tab_widget.add_tab(module_config.get_option('module', 'name'), module)
 
     def center(self):
         qr = self.frameGeometry()
