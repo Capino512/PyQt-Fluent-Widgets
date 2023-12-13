@@ -53,7 +53,10 @@ class Demo(FramelessMainWindow):
                 continue
             module_config = load_config(init_module_config, module_ini)
             module_name = module_config.get_option('module', 'name')
+            module_desc = module_config.get_option('module', 'desc')
             item = QListWidgetItem(module_name)
+            if module_desc:
+                item.setToolTip(module_desc)
             item.setData(Qt.ItemDataRole.UserRole, [module_dir, module_ini, module_pkg])
             module_list.addItem(item)
 
