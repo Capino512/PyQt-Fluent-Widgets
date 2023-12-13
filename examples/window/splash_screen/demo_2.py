@@ -20,7 +20,7 @@ class Demo(FramelessWindow):
 
         # create splash screen and show window
         self.splashScreen = SplashScreen(self.windowIcon(), self)
-        self.splashScreen.setIconSize(QSize(102, 102))
+        # self.splashScreen.setIconSize(QSize(102, 102))
 
         # customize the title bar of splash screen
         # titleBar = StandardTitleBar(self.splashScreen)
