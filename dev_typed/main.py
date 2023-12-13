@@ -9,7 +9,7 @@ from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtWidgets import QApplication, QWidget, QHBoxLayout, QListWidgetItem
 from qfluentwidgets import ListWidget
 from qframelesswindow import FramelessMainWindow, StandardTitleBar
-from utils import init_main_config, init_module_config, parse_input_config
+from utils import init_main_config, init_module_config, load_config
 from widgets import TabWidget
 from module import Module
 
@@ -18,9 +18,7 @@ class Demo(FramelessMainWindow):
     def __init__(self):
         super(Demo, self).__init__()
 
-        config = init_main_config()
-        # config.dump_ini('config.ini')
-        config.load_ini('config.ini')
+        config = load_config(init_main_config, 'config.ini')
         self.config = config
 
         self.setTitleBar(StandardTitleBar(self))
@@ -53,8 +51,7 @@ class Demo(FramelessMainWindow):
             module_pkg = f'extensions.{module}'
             if not os.path.exists(module_ini):
                 continue
-            module_config = init_module_config()
-            module_config.load_ini(module_ini)
+            module_config = load_config(init_module_config, module_ini)
             module_name = module_config.get_option('module', 'name')
             item = QListWidgetItem(module_name)
             item.setData(Qt.ItemDataRole.UserRole, [module_dir, module_ini, module_pkg])
@@ -62,12 +59,10 @@ class Demo(FramelessMainWindow):
 
     def add_tab(self, item):
         module_dir, module_ini, module_pkg = item.data(Qt.ItemDataRole.UserRole)
-        module_config = init_module_config()
-        module_config.load_ini(module_ini)
+        module_config = load_config(init_module_config, module_ini)
         execute = module_config.get_option('module', 'execute')
         config_path = os.path.join(module_dir, module_config.get_option('module', 'config'))
-        mode = 'r' if os.path.exists(config_path) else 'w'
-        input_config = parse_input_config(importlib.import_module(module_pkg).init_config, config_path, mode)
+        input_config = load_config(importlib.import_module(module_pkg).init_config, config_path, skip_error=True)
         module = Module(module_dir, execute, config_path, input_config, self.config)
         self.tab_widget.add_tab(module_config.get_option('module', 'name'), module)
 
@@ -79,9 +74,6 @@ class Demo(FramelessMainWindow):
 
 
 if __name__ == '__main__':
-
-    W = 960
-    H = 640
 
     sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
     app = QApplication(sys.argv)

@@ -1,4 +1,4 @@
-
+import os
 
 from typed import *
 
@@ -34,10 +34,10 @@ def init_module_config():
     return config
 
 
-def parse_input_config(init_config, config_path, mode):
+def load_config(init_config, config_path, skip_error=False):
     config = init_config()
-    if mode == 'w':
-        config.dump_ini(config_path)
+    if os.path.exists(config_path):
+        config.load_ini(config_path, skip_error=skip_error)
     else:
-        config.load_ini(config_path, skip_error=True)
+        config.dump_ini(config_path)
     return config
