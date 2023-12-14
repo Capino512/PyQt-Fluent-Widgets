@@ -34,3 +34,4 @@ PyQt6_Fluent_Widgets.egg-info/
 PySide2_Fluent_Widgets.egg-info/
 
 *.exe
+*.spec

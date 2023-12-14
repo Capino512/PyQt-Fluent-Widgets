@@ -1,7 +1,3 @@
-PySide6-Fluent-Widgets[full]
 pyinstaller
+PySide6-Fluent-Widgets[full]
 
-# himawari
-pendulum
-aioftp
-aria2p[tui]
