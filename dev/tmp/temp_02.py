@@ -55,3 +55,21 @@ ftp://ftp.ptree.jaxa.jp/jma/netcdf/202401/03/NC_H09_20240103_1110_R21_FLDK.06001
 ftp://ftp.ptree.jaxa.jp/jma/netcdf/202401/03/NC_H09_20240103_1220_R21_FLDK.06001_06001.nc
 '''
 print('\n'.join(set(s.strip().split('\n'))))
+
+
+print(1, 2 if False else 3)
+
+class A:
+    def __str__(self):
+        return 'A'
+
+    def __repr__(self):
+        return 'B'
+
+print(A())
+print(str(A()))
+print(repr(A()))
+
+print(f'{A()}')
+
+# print('' + A())
