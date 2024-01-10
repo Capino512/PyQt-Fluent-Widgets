@@ -62,9 +62,9 @@ class _Var:
         return self.to_string()
 
 
-class _SingleVar(_Var):
+class _BaseVar(_Var):
     def __init__(self, type_, default=Unset, *, desc=None):
-        super(_SingleVar, self).__init__(default, desc=desc)
+        super(_BaseVar, self).__init__(default, desc=desc)
         self.type = type_
 
     def _get_desc(self):
@@ -78,12 +78,12 @@ class _SingleVar(_Var):
         return self.type(value)
 
 
-class Bool(_SingleVar):
+class Bool(_BaseVar):
     def __init__(self, default=Unset, *, desc=None):
         super(Bool, self).__init__(_Bool, default, desc=desc)
 
 
-class _Number(_SingleVar):
+class _Number(_BaseVar):
     def __init__(self, type_, default=Unset, minimum=None, maximum=None, clamp=False, check_range=True, *, desc=None):
         super(_Number, self).__init__(type_, default, desc=desc)
         self.minimum = minimum
@@ -113,7 +113,7 @@ class Float(_Number):
         super(Float, self).__init__(_Float, default, minimum, maximum, clamp, check_range, desc=desc)
 
 
-class String(_SingleVar):
+class String(_BaseVar):
     def __init__(self, default=Unset, *, desc=None):
         super(String, self).__init__(_String, default, desc=desc)
 

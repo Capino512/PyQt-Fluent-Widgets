@@ -73,3 +73,8 @@ print(repr(A()))
 print(f'{A()}')
 
 # print('' + A())
+
+try:
+    assert False, ArithmeticError('yyy')
+except Exception as e:
+    print(type(e), e)
