@@ -1,6 +1,6 @@
 
 
-from PySide6.QtWidgets import  QWidget, QVBoxLayout, QStackedWidget
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget
 from qfluentwidgets import TabBar, TabCloseButtonDisplayMode
 
 

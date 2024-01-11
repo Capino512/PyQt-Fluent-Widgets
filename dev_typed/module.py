@@ -78,7 +78,7 @@ class Module(QWidget):
 
         items = [vbox.itemAt(i) for i in range(vbox.count())]
         for item in items:
-            if widget_or_layout:= (item.widget() or item.layout()):
+            if widget_or_layout := (item.widget() or item.layout()):
                 widget_or_layout.deleteLater()
             vbox.removeItem(item)
         self.values.clear()

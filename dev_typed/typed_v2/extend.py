@@ -5,9 +5,16 @@ from ._types import *
 
 
 __all__ = [
-    'IntSlider', 'FloatSlider', 'Password', 'ComboVar',
-    'InputFile', 'OutputFile', 'InPutTextFile', 'OutPutTextFile', 'InputDir', 'OutputDir',
+    'IntSlider', 'FloatSlider', 'Password', 'Combo', 'File', 'Dir',
 ]
+
+
+class Check(Bool):
+    pass
+
+
+class Switch(Bool):
+    pass
 
 
 class _Slider(_Number):
@@ -31,9 +38,9 @@ class Password(String):
     pass
 
 
-class ComboVar(_Var):
+class _Combo(_Var):
     def __init__(self, type_, values, default=Unset, *, desc=None):
-        super(ComboVar, self).__init__(default, desc=desc)
+        super(_Combo, self).__init__(default, desc=desc)
         self.type = type_
         self.values = values
         self.values_as_string = [type_.to_string(value) for value in values]
@@ -46,47 +53,41 @@ class ComboVar(_Var):
         return self.type.to_string(self.value)
 
     def _from_string(self, value):
-        return  self.type(value)
+        return self.type(value)
+
+
+class Combo(_Combo):
+    pass
+
+
+class Radio(_Combo):
+    pass
 
 
 class _File(String):
-    def __init__(self, default=Unset, filters='', *, desc=None):
-        super(String, self).__init__(default, desc=desc)
+    def _from_string(self, value):
+        assert value != '' or (self._default is not Unset)
+        return super()._from_string(value)
+
+
+class File(_File):
+    def __init__(self, default=Unset, filters='', is_input=True, is_editable_text=False, *, desc=None):
+        super(_File, self).__init__(default, desc=desc)
+        self.is_input = is_input
+        self.is_editable_text = is_editable_text
         self.filters = filters
 
-    def _from_string(self, value):
-        assert value != '' or (self._default is not Unset)
-        return super()._from_string(value)
 
-
-class _Dir(String):
-    def __init__(self, default=Unset, *, desc=None):
-        super(_Dir, self).__init__(default, desc=desc)
-
-    def _from_string(self, value):
-        assert value != '' or (self._default is not Unset)
-        return super()._from_string(value)
-
-
-class InputFile(_File):
+class Dir(_File):
     pass
 
 
-class OutputFile(_File):
-    pass
-
-
-class InPutTextFile(_File):
-    pass
-
-
-class OutPutTextFile(_File):
-    pass
-
-
-class InputDir(_Dir):
-    pass
-
-
-class OutputDir(_Dir):
-    pass
+allowed_vars = [
+    Bool, Check, Switch,
+    Int, IntSlider,
+    Float, FloatSlider,
+    String, Password, File, Dir,
+    Array,
+    List,
+    Combo, Radio,
+]
