@@ -38,6 +38,24 @@ class Password(String):
     pass
 
 
+class _File(String):
+    def _from_string(self, value):
+        assert value != '' or (self._default is not Unset)
+        return super()._from_string(value)
+
+
+class File(_File):
+    def __init__(self, default=Unset, filters='', is_input=True, is_editable_text=False, *, desc=None):
+        super(_File, self).__init__(default, desc=desc)
+        self.is_input = is_input
+        self.is_editable_text = is_editable_text
+        self.filters = filters
+
+
+class Dir(_File):
+    pass
+
+
 class _Combo(_Var):
     def __init__(self, type_, values, default=Unset, *, desc=None):
         super(_Combo, self).__init__(default, desc=desc)
@@ -61,24 +79,6 @@ class Combo(_Combo):
 
 
 class Radio(_Combo):
-    pass
-
-
-class _File(String):
-    def _from_string(self, value):
-        assert value != '' or (self._default is not Unset)
-        return super()._from_string(value)
-
-
-class File(_File):
-    def __init__(self, default=Unset, filters='', is_input=True, is_editable_text=False, *, desc=None):
-        super(_File, self).__init__(default, desc=desc)
-        self.is_input = is_input
-        self.is_editable_text = is_editable_text
-        self.filters = filters
-
-
-class Dir(_File):
     pass
 
 
