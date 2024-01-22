@@ -12,19 +12,19 @@ class _Var:
         self._desc = '' if (desc is None) else f' # {desc}'
         self._value = Unset
 
-    @property
-    def value(self):
+    # @property
+    def get_value(self):
         return self._default if self._value is Unset else self._value
 
-    @value.setter
-    def value(self, value):
+    # @value.setter
+    def set_value(self, value):
         self._value = value
 
     def reset(self):
         self._value = Unset
 
     def has_value(self):
-        return self.value is not Unset
+        return self.get_value() is not Unset
 
     def _get_desc(self):
         raise NotImplementedError
@@ -72,7 +72,7 @@ class _BaseVar(_Var):
         return f'[{self.type.name}]{default}'
 
     def _to_string(self):
-        return self.type.to_string(self.value)
+        return self.type.to_string(self.get_value())
 
     def _from_string(self, value):
         return self.type(value)
@@ -80,7 +80,7 @@ class _BaseVar(_Var):
 
 class Bool(_BaseVar):
     def __init__(self, default=Unset, *, desc=None):
-        super(Bool, self).__init__(_Bool, default, desc=desc)
+        super(Bool, self).__init__(BoolType, default, desc=desc)
 
 
 class _Number(_BaseVar):
@@ -105,17 +105,17 @@ class _Number(_BaseVar):
 
 class Int(_Number):
     def __init__(self, default=Unset, minimum=None, maximum=None, clamp=False, check_range=False, *, desc=None):
-        super(Int, self).__init__(_Int, default, minimum, maximum, clamp, check_range, desc=desc)
+        super(Int, self).__init__(IntType, default, minimum, maximum, clamp, check_range, desc=desc)
 
 
 class Float(_Number):
     def __init__(self, default=Unset, minimum=None, maximum=None, clamp=False, check_range=False, *, desc=None):
-        super(Float, self).__init__(_Float, default, minimum, maximum, clamp, check_range, desc=desc)
+        super(Float, self).__init__(FloatType, default, minimum, maximum, clamp, check_range, desc=desc)
 
 
 class String(_BaseVar):
     def __init__(self, default=Unset, *, desc=None):
-        super(String, self).__init__(_String, default, desc=desc)
+        super(String, self).__init__(StringType, default, desc=desc)
 
 
 class Array(_Var):
@@ -129,7 +129,7 @@ class Array(_Var):
         return '[{}] × {}'.format(self.type.name, '?' if self.length is None else self.length)
 
     def _to_string(self):
-        return ', '.join([self.type.to_string(value) for value in self.value])
+        return ', '.join([self.type.to_string(value) for value in self.get_value()])
 
     def _from_string(self, values):
         values = values.split(',')
@@ -147,7 +147,7 @@ class List(_Var):
         return '[%s]' % ', '.join([type_.name for type_ in self.type_list])
 
     def _to_string(self):
-        return ', '.join([type_.to_string(value) for type_, value in zip(self.type_list, self.value)])
+        return ', '.join([type_.to_string(value) for type_, value in zip(self.type_list, self.get_value())])
 
     def _from_string(self, values):
         values = values.split(',')

@@ -13,11 +13,11 @@ class Config(OrderedDict):
     def add_section(self, section):
         self[section] = OrderedDict()
 
-    def add_option(self, section, option, value):
-        self[section][option] = value
+    def add_option(self, section, option, var):
+        self[section][option] = var
 
     def get_option(self, section, option):
-        return self[section][option].value
+        return self[section][option].get_value()
 
     def dump_ini(self, path):
         parser = configparser.ConfigParser(allow_no_value=True)

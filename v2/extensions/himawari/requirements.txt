@@ -1,0 +1,4 @@
+pyinstaller
+pendulum
+aioftp
+aria2p[tui]

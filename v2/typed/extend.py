@@ -4,9 +4,7 @@ from .vars import *
 from ._types import *
 
 
-__all__ = [
-    'IntSlider', 'FloatSlider', 'Password', 'Combo', 'File', 'Dir',
-]
+__all__ = ['Check', 'Switch', 'IntSlider', 'FloatSlider', 'Password', 'Combo', 'Radio', 'File', 'Dir']
 
 
 class Check(Bool):
@@ -18,18 +16,18 @@ class Switch(Bool):
 
 
 class _Slider(_Number):
-    def __init__(self, type_, lower, upper, default=Unset, *, desc=None):
-        super(_Slider, self).__init__(type_, default, lower, upper, desc=desc)
+    def __init__(self, type_, minimum, maximum, default=Unset, *, desc=None):
+        super(_Slider, self).__init__(type_, default, minimum, maximum, desc=desc)
 
 
 class IntSlider(_Slider):
-    def __init__(self, lower, upper, default=Unset, *, desc=None):
-        super(IntSlider, self).__init__(_Int, lower, upper, default, desc=desc)
+    def __init__(self, minimum, maximum, default=Unset, *, desc=None):
+        super(IntSlider, self).__init__(IntType, minimum, maximum, default, desc=desc)
 
 
 class FloatSlider(_Slider):
-    def __init__(self, lower, upper, default=Unset, steps=100, precision=2, desc=None):
-        super(FloatSlider, self).__init__(_Float, lower, upper, default, desc=desc)
+    def __init__(self, minimum, maximum, default=Unset, steps=100, precision=2, desc=None):
+        super(FloatSlider, self).__init__(FloatType, minimum, maximum, default, desc=desc)
         self.steps = steps
         self.precision = precision
 
@@ -39,6 +37,8 @@ class Password(String):
 
 
 class _File(String):
+    cwd = None
+
     def _from_string(self, value):
         assert value != '' or (self._default is not Unset)
         return super()._from_string(value)
@@ -68,7 +68,7 @@ class _Combo(_Var):
         return f'[{self.type.name}] (%s)' % ', '.join(self.values_as_string)
 
     def _to_string(self):
-        return self.type.to_string(self.value)
+        return self.type.to_string(self.get_value())
 
     def _from_string(self, value):
         return self.type(value)

@@ -3,7 +3,7 @@
 import configparser
 
 
-__all__ = ['_Bool', '_Int', '_Float', '_String', 'Unset']
+__all__ = ['BoolType', 'IntType', 'FloatType', 'StringType', 'Unset']
 
 
 BOOLEAN_STATES = configparser.ConfigParser.BOOLEAN_STATES
@@ -30,8 +30,8 @@ def bool2string(value):
     return 'true' if value else 'false'
 
 
-_Int = _Type('Int', int, str)
-_Float = _Type('Float', float, str)  # inf -inf nan
-_Bool = _Type('Bool', string2bool, bool2string)
-_String = _Type('String', str, str)
+IntType = _Type('Int', int, str)
+FloatType = _Type('Float', float, str)  # inf -inf nan
+BoolType = _Type('Bool', string2bool, bool2string)
+StringType = _Type('String', str, str)
 Unset = object()
