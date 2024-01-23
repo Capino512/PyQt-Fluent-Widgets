@@ -84,13 +84,18 @@ class Module(QWidget):
         self.values.clear()
 
         for section, options in self.config.items():
+            if section.startswith('__') or self.config[f'__{section}'].get('hidden', False):
+                continue
             box = QGroupBox(section.capitalize())
             layout = QFormLayout()
             for option, var in options.items():
+                if option.startswith('__') or options[f'__{option}'].get('hidden', False):
+                    continue
                 label = BodyLabel(option.capitalize())
+                label.setToolTip(var.desc)
                 label.setFixedWidth(self.ui_config.get_option('module', 'label_width'))
                 label.setFixedHeight(self.ui_config.get_option('module', 'label_height'))
-                widget = get_input_widget(var, cwd, self)
+                widget = get_input_widget(var, options[f'__{option}'], cwd, self)
                 layout.addRow(label, widget)
                 self.values.append([var, label, widget])
             box.setLayout(layout)

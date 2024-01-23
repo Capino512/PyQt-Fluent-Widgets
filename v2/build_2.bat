@@ -5,4 +5,5 @@ call conda activate for_dist
 call pip install -r requirements.txt
 call pyinstaller -F -w -p . -i .\asserts\logo.png main.py
 rem call pyinstaller -F -w --upx-dir D:\sys\bin\upx-4.2.1-win64 -p . -i .\asserts\logo.png main.py
+call conda env export -f environment.yml
 pause

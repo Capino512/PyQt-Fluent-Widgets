@@ -48,7 +48,7 @@ class Demo(FramelessMainWindow):
         for module in os.listdir('./extensions'):
             module_dir = os.path.join('./extensions', module)
             module_ini = os.path.join(module_dir, 'module.ini')
-            module_pkg = f'extensions.{module}'
+            module_pkg = f'extensions.{module}.config'
             if not os.path.exists(module_ini):
                 continue
             module_config = load_config(init_module_config, module_ini)

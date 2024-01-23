@@ -55,14 +55,15 @@ def main(config_file='config.ini'):
     if output_file == '':
         output_file = pdl.now().strftime('%Y-%d-%m_%H-%M-%S.txt')
     timezone = pdl.local_timezone() if timezone == 'local' else pdl.UTC
-    print('Time Zone:', timezone.name)
+    print('输入时区：', timezone.name, end='\n')
+    print('开始查询...', end='\n\n')
 
     results = []
     with open(output_file, 'wt', encoding='utf-8') as out_f:
         for count, line in read_file(input_file):
-            print(f'[%0{num_length}d]' % count)
+            print('[{:0{width}d}]'.format(count, width=num_length))
             try:
-                t1 = pdl.parse(line, tz=timezone)
+                t1 = pdl.parse(line, tz=timezone, strict=False)
                 print(f'{line} >> {t1}')
             except:
                 print(f'{line} >> 解析日期失败')
@@ -70,15 +71,29 @@ def main(config_file='config.ini'):
 
             success, result = asyncio.run(query(ftp_user, ftp_password, ftp_timeout, t1, mistiming))
             if success:
-                out_f.write(f'ftp://{FTP_HOST}{result}\n')
-                results.append(result)
-                print(result)
+                if result in results:
+                    print(f'{result} >重复记录<')
+                else:
+                    out_f.write(f'ftp://{FTP_HOST}{result}\n')
+                    results.append(result)
+                    print(result)
             else:
-                print('no match')
+                print('未匹配')
             print('')
-    if download:
+
+    if len(results) > 0:
+        print('查询结果：')
         for result in results:
-            aria2.add(f'ftp://{ftp_user}:{ftp_password}@{FTP_HOST}{result}')
+            print(f'ftp://{FTP_HOST}{result}')
+
+        print('')
+        if download:
+            print('添加下载任务...')
+            for count, result in enumerate(results):
+                print('[{:0{width}d} / {:0{width}d}]'.format(count + 1, len(results), width=num_length))
+                aria2.add(f'ftp://{ftp_user}:{ftp_password}@{FTP_HOST}{result}')
+    else:
+        print('查询结果为空')
 
 
 if __name__ == '__main__':

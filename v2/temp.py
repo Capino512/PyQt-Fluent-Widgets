@@ -41,6 +41,10 @@ class Demo(QWidget):
 
 
 if __name__ == '__main__':
+
+    print('{:0{width}d}'.format(10, width=4))
+    exit()
+
     app = QApplication(sys.argv)
     w = Demo()
     w.show()

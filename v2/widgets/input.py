@@ -28,7 +28,7 @@ class LineEditWidget(LineEdit, _InputWidget):
 
     def __init__(self, var, parent=None):
         super(LineEditWidget, self).__init__(parent)
-        self.setToolTip(var.desc)
+        # self.setToolTip(var.desc)
         self.setClearButtonEnabled(True)
         if var.has_value():
             self.setText(str(var))
@@ -44,7 +44,7 @@ class LineEditWidget(LineEdit, _InputWidget):
 class PasswordLineEditWidget(PasswordLineEdit, _InputWidget):
     def __init__(self, var, parent=None):
         super(PasswordLineEditWidget, self).__init__(parent)
-        self.setToolTip(var.desc)
+        # self.setToolTip(var.desc)
         self.setClearButtonEnabled(True)
         if var.has_value():
             self.setText(str(var))
@@ -60,7 +60,7 @@ class PasswordLineEditWidget(PasswordLineEdit, _InputWidget):
 class CheckBoxWidget(CheckBox, _InputWidget):
     def __init__(self, var, parent=None):
         super(CheckBoxWidget, self).__init__(parent)
-        self.setToolTip(var.desc)
+        # self.setToolTip(var.desc)
         if var.has_value():
             self.setChecked(var.get_value())
         else:
@@ -77,7 +77,7 @@ class CheckBoxWidget(CheckBox, _InputWidget):
 class SwitchButtonWidget(SwitchButton, _InputWidget):
     def __init__(self, var, parent=None):
         super(SwitchButtonWidget, self).__init__(parent)
-        self.setToolTip(var.desc)
+        # self.setToolTip(var.desc)
         self.setChecked(var.has_value() and var.get_value())
         self.var = var
 
@@ -88,7 +88,7 @@ class SwitchButtonWidget(SwitchButton, _InputWidget):
 class ComboBoxWidget(ComboBox, _InputWidget):
     def __init__(self, var, parent=None):
         super(ComboBoxWidget, self).__init__(parent)
-        self.setToolTip(var.desc)
+        # self.setToolTip(var.desc)
         self.addItems(var.values_as_string)
         if var.has_value():
             self.setText(str(var))
@@ -101,7 +101,7 @@ class ComboBoxWidget(ComboBox, _InputWidget):
 class RadioButtonWidget(QWidget, _InputWidget):
     def __init__(self, var, parent=None):
         super(RadioButtonWidget, self).__init__(parent)
-        self.setToolTip(var.desc)
+        # self.setToolTip(var.desc)
         hbox = QHBoxLayout(self)
         btns = QButtonGroup(self)
         default = var.get_value()
@@ -119,7 +119,7 @@ class RadioButtonWidget(QWidget, _InputWidget):
 
 
 class SliderWidget(QWidget, _InputWidget):
-    def __init__(self, var, parent=None):
+    def __init__(self, var, parent=None, label_width=60):
         super(SliderWidget, self).__init__(parent)
 
         lower = var.minimum
@@ -141,10 +141,10 @@ class SliderWidget(QWidget, _InputWidget):
         layout = QHBoxLayout()
 
         label = BodyLabel()
-        label.setFixedWidth(60)  # todo
+        label.setFixedWidth(label_width)  # todo
 
         slider = Slider()
-        slider.setToolTip(var.desc)
+        # slider.setToolTip(var.desc)
         slider.setOrientation(Qt.Orientation.Horizontal)
         slider.setRange(minimum, maximum)
         slider.valueChanged.connect(update_label)
@@ -195,19 +195,19 @@ class FileDirWidget(QWidget, _InputWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         line = LineEdit()
-        line.setToolTip(var.desc)
+        # line.setToolTip(var.desc)
         if var.has_value():
             line.setText(str(var))
 
-        icon = QIcon(FluentIcon.MORE.path())
-        btn = ToolButton()
-        btn.setIcon(icon)
+        # icon = QIcon(FluentIcon.MORE.path())
+        btn = ToolButton(FluentIcon.MORE)
+        # btn.setIcon(icon)
         btn.setFixedWidth(btn.sizeHint().height())
         btn.clicked.connect(_dialog)
 
-        icon = QIcon(FluentIcon.FOLDER.path())
-        btn2 = ToolButton()
-        btn2.setIcon(icon)
+        # icon = QIcon(FluentIcon.FOLDER.path())
+        btn2 = ToolButton(FluentIcon.FOLDER)
+        # btn2.setIcon(icon)
         btn2.setFixedWidth(btn.sizeHint().height())
         btn2.clicked.connect(self.open_dir)
 
@@ -223,8 +223,6 @@ class FileDirWidget(QWidget, _InputWidget):
 
         if is_editable_text:
             text = TextEdit()
-            if not is_input:
-                text.setReadOnly(True)
             v_layout = QVBoxLayout()
             v_layout.setContentsMargins(0, 0, 0, 0)
             v_layout.addLayout(layout)
@@ -232,7 +230,13 @@ class FileDirWidget(QWidget, _InputWidget):
             self.setLayout(v_layout)
             self.text = text
             if is_input:
+                btn3 = ToolButton(FluentIcon.SYNC)
+                btn3.setFixedWidth(btn.sizeHint().height())
+                btn3.clicked.connect(self.load_text)
+                layout.insertWidget(1, btn3)
                 self.load_text()
+            else:
+                text.setReadOnly(True)
         else:
             self.setLayout(layout)
 
@@ -256,10 +260,10 @@ class FileDirWidget(QWidget, _InputWidget):
         return self.var.validate(self.line.text())
 
     def get_value(self):
-        if self.is_input:
-            if os.path.isfile(path := self.get_input_path()):
-                with open(path, 'wt', encoding='utf-8') as f:
-                    f.write(self.text.toPlainText())
+        if self.is_editable_text and self.is_input:
+            # if os.path.isfile(path := self.get_input_path()):
+            with open(self.get_input_path(), 'wt', encoding='utf-8') as f:
+                f.write(self.text.toPlainText())
         return self.var(self.line.text())
 
     def update_value(self):
@@ -267,7 +271,7 @@ class FileDirWidget(QWidget, _InputWidget):
             self.load_text()
 
 
-def get_input_widget(var, cwd, parent=None):
+def get_input_widget(var, kwargs, cwd, parent=None):
     if isinstance(var, Check):
         widget = CheckBoxWidget
     elif isinstance(var, Switch):
@@ -285,4 +289,4 @@ def get_input_widget(var, cwd, parent=None):
         widget = FileDirWidget
     else:
         widget = LineEditWidget
-    return widget(var, parent)
+    return widget(var, parent=parent, **kwargs)

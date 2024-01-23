@@ -28,7 +28,7 @@ def init_config():
     config.add_option('xxx', fn(), File(desc='desc', is_input=True, filters="Images (*.png *.jpg *.bmp)"))
     config.add_option('xxx', fn(), File(desc='desc', is_input=True, is_editable_text=True, filters="Text (*.txt)"))
     config.add_option('xxx', fn(), Dir(desc='desc'))
-    config.add_option('xxx', fn(), IntSlider(-10, 10, desc='desc'))
+    config.add_option('xxx', fn(), IntSlider(-10, 10, desc='desc'), label_width=200)
     config.add_option('xxx', fn(), FloatSlider(-10, 10, desc='desc'))
     config.add_option('xxx', fn(), Check(desc='desc'))
     config.add_option('xxx', fn(), Check(True, desc='desc'))
